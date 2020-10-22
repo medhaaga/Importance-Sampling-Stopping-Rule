@@ -15,20 +15,20 @@ var.is <- function(Sigma, Lambda){
   return((sqrt(det(Sigma))/(det(Lambda) * sqrt(det(foo)))) * solve(foo))
 }
 
-obj_det <- function(par, Lambda){
+obj.det <- function(par, Lambda){
   sigma <- par[1]
   rho <- par[2]
-  Sigma <- matrix(c(sigma, rho, rho, sigma), 2, 2)
+  Sigma <- matrix(c(sigma, rho*sigma, rho*sigma, sigma), 2, 2)
   foo <- 2*solve(Lambda) - solve(Sigma)
   return((sqrt(det(Sigma))/(det(Lambda) * sqrt(det(foo))))^2 / det(foo))
 }
 
-obj_trace <- function(par, Lambda){
+obj.trace <- function(par, Lambda){
   sigma <- par[1]
   rho <- par[2]
-  Sigma <- matrix(c(sigma, rho, rho, sigma), 2, 2)
+  Sigma <- matrix(c(sigma, rho*sigma, rho*sigma, sigma), 2, 2)
   foo <- 2*solve(Lambda) - solve(Sigma)
-  return((sqrt(det(Sigma))/(det(Lambda) * sqrt(det(foo)))) * sum(diag(foo)))
+  return((sqrt(det(Sigma))/(det(Lambda) * sqrt(det(foo)))) * sum(diag(solve(foo))))
 }
 
 ###########################################################
@@ -39,7 +39,7 @@ obj_trace <- function(par, Lambda){
 
 lambda <- .1
 Lambda <- matrix(c(1, lambda, lambda, 1), 2, 2)
-optim(c(1,0), fn = obj.det, Lambda = Lambda)
+optim(c(1,0), fn = obj.det, Lambda = Lambda, method = "BFGS")
 
 ############################################
 ###### Varying sigma #######################
@@ -56,7 +56,7 @@ rho <- .1
 
 for (y in 1:length(prop_sigma)){
   
-  Sigma <- matrix(c(prop_sigma[y], rho, rho, prop_sigma[y]), 2, 2)
+  Sigma <- matrix(c(prop_sigma[y], rho* prop_sigma[y], rho* prop_sigma[y], prop_sigma[y]), 2, 2)
   true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
   var.f <- Lambda  # true Var_p(h(x))
   is <- rmvnorm(N, mean=rep(0,p), sigma = Sigma )  ## Importance samples
@@ -67,7 +67,7 @@ for (y in 1:length(prop_sigma)){
   ess.kong[y] <- 1/sum(norm_weights^2)      ## estimated SNIS ESS 
   ess[y] <- N*det(var.f)*(1/det(true.var))
   
-  B <- 500
+  B <- N
   boot_means <- matrix(0, nrow = B, ncol = p)
   
   varIbar <- cov.wt(x = is-snis, wt  = weights)$cov/(N)    ## empirical Var_p(h(x))
@@ -103,7 +103,7 @@ sigma <- 1.5
 
 for (y in 1:length(prop_rho)){
   
-  Sigma <- matrix(c(sigma, prop_rho[y], prop_rho[y], sigma), 2, 2)
+  Sigma <- matrix(c(sigma, prop_rho[y]*sigma, prop_rho[y]*sigma, sigma), 2, 2)
   true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
   var.f <- Lambda  # true Var_p(h(x))
   is <- rmvnorm(N, mean=rep(0,p), sigma = Sigma )  ## Importance samples
@@ -141,7 +141,7 @@ abline(v=prop_rho[ess == max(ess)], col = "pink")
 
 lambda <- .9
 Lambda <- matrix(c(1, lambda, lambda, 1), 2, 2)
-optim(par = c(1,.7), fn = obj.det, Lambda=Lambda)
+optim(par = c(1,.7), fn = obj.det, Lambda = Lambda)
 
 
 ############################################
@@ -159,7 +159,7 @@ rho <- .9
 
 for (y in 1:length(prop_sigma)){
   
-  Sigma <- matrix(c(prop_sigma[y], rho, rho, prop_sigma[y]), 2, 2)
+  Sigma <- matrix(c(prop_sigma[y], rho*prop_sigma[y], rho*prop_sigma[y], prop_sigma[y]), 2, 2)
   true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
   var.f <- Lambda  # true Var_p(h(x))
   is <- rmvnorm(N, mean=rep(0,p), sigma = Sigma )  ## Importance samples
@@ -206,7 +206,7 @@ sigma <- 1.5
 
 for (y in 1:length(prop_rho)){
   
-  Sigma <- matrix(c(sigma, prop_rho[y], prop_rho[y], sigma), 2, 2)
+  Sigma <- matrix(c(sigma, prop_rho[y]*sigma, prop_rho[y]*sigma, sigma), 2, 2)
   true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
   var.f <- Lambda  # true Var_p(h(x))
   is <- rmvnorm(N, mean=rep(0,p), sigma = Sigma )  ## Importance samples
@@ -252,7 +252,7 @@ dev.off()
 
 lambda <- .1
 Lambda <- matrix(c(1, lambda, lambda, 1), 2, 2)
-optim(c(1,0.5), fn = obj_trace, Lambda = Lambda)
+optim(c(1.5,0.1), fn = obj.trace, Lambda = Lambda, method = "BFGS")
 
 ############################################
 ###### Varying sigma #######################
@@ -356,14 +356,15 @@ dev.off()
 ################ High correlation #########################
 ###########################################################
 
-lambda <- .9
+lambda <- .8
 Lambda <- matrix(c(1, lambda, lambda, 1), 2, 2)
-optim(c(1,.2), fn = obj_trace, Lambda = Lambda)
+optim(c(1,.8), fn = obj.trace, Lambda = Lambda, method = "BFGS")
+
 ############################################
 ###### Varying sigma #######################
 ############################################
 
-prop_sigma <- seq((1/sqrt(2))+.3, 2*sqrt((p+1)/p), .1)  #proposal sigmas
+prop_sigma <- seq((1/sqrt(2))+.3, 2*sqrt((p+1)/p), .05)  #proposal sigmas
 ess <- numeric(length = length(prop_sigma))
 ess.kong <- numeric(length = length(prop_sigma))
 ess.boot <- numeric(length = length(prop_sigma))
@@ -372,11 +373,11 @@ ess.boot <- numeric(length = length(prop_sigma))
 ###### Simple Importance Sampling ############
 ##############################################
 
-rho <- .9
+rho <- .8
 
 for (y in 1:length(prop_sigma)){
   
-  Sigma <- matrix(c(prop_sigma[y], rho, rho, prop_sigma[y]), 2, 2)
+  Sigma <- matrix(c(prop_sigma[y], rho*prop_sigma[y], rho*prop_sigma[y], prop_sigma[y]), 2, 2)
   true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
   var.f <- Lambda  # true Var_p(h(x))
   is <- rmvnorm(N, mean=rep(0,p), sigma = Sigma )  ## Importance samples
@@ -412,7 +413,7 @@ dev.off()
 ###### Varying rho #######################
 ############################################
 
-prop_rho <- seq(0, 1, .1)  #proposal sigmas
+prop_rho <- seq(.6, .939, .02)  #proposal sigmas
 ess <- numeric(length = length(prop_rho))
 ess.kong <- numeric(length = length(prop_rho))
 ess.boot <- numeric(length = length(prop_rho))
@@ -425,7 +426,7 @@ sigma <- 1.5
 
 for (y in 1:length(prop_rho)){
   
-  Sigma <- matrix(c(sigma, prop_rho[y], prop_rho[y], sigma), 2, 2)
+  Sigma <- matrix(c(sigma, prop_rho[y]*sigma, prop_rho[y]*sigma, sigma), 2, 2)
   true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
   var.f <- Lambda  # true Var_p(h(x))
   is <- rmvnorm(N, mean=rep(0,p), sigma = Sigma )  ## Importance samples
