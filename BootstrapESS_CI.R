@@ -45,9 +45,10 @@ for (i in 1:length(sep))
   ess.kong.var[i] <- var(boot.kong.ess)
 }
 
-pdf(file = "sepVSess.pdf", feight = 5, width = 5)
+pdf(file = "sepVSess.pdf", height = 5, width = 5)
 plot(sep, ess.emp, "l", ylim = range(ess.kong+ess.kong.var, ess.emp+ess.emp.var, ess.kong-ess.kong.var, ess.emp-ess.emp.var))
 lines(sep, ess.kong, col = "red")
 segments(x0 = sep, y0 = ess.emp-.5*ess.emp.var, x1 = sep, y1 = ess.emp+.5*ess.emp.var, col = adjustcolor("black", alpha.f=.4))
 segments(x0 = sep, y0 = ess.kong-.5*ess.kong.var, x1 = sep, y1 = ess.kong+.5*ess.kong.var, col = adjustcolor("red", alpha.f=.4))
+legend("topright", legend = c("Empirical", "Kong"), col = c("black", "red"), lwd=2)
 dev.off()
