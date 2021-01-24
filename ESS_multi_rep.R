@@ -12,9 +12,8 @@ var.snis <- function (a1, a2, m){
 }
 
 min_ess <- minESS(1)
-step <- 100
+step <- 10
 N_min <- 5e3
-
 loop <- 100
 iter.emp <- rep(N_min, loop)
 iter.truth <- rep(N_min, loop)
@@ -25,7 +24,6 @@ means.kong <- rep(0, loop)
 ess.emp <- rep(0, loop)
 ess.truth <- rep(0, loop)
 ess.kong <- rep(0, loop)
-
 for(t in 1:loop){
   
   print(t)
@@ -71,16 +69,37 @@ for(t in 1:loop){
       ess.kong[t] <- 1/sum(norm_weights^2)
       means.kong[t] <- snis
     }
-
+    
   }
 }
-
-
+  
 save(ess.emp, ess.truth, ess.kong, iter.emp, iter.truth, iter.kong, means.emp, means.truth, means.kong, file = "gamma_multi_rep_m3_alpha4.Rdata")
 
-pdf(file = "gamma-multirep_m3_alpha4.pdf")
-plot(iter.emp, means.emp, pch=19, col = "blue", xlab = "Iterations", ylab = "Average", xlim = range(iter.emp, iter.kong), ylim = range(means.emp, means.kong))
-points(iter.kong, means.kong, pch = 19, col = "orange")
-abline(v = iter.truth[1], lty=2)
-legend("topright", legend = c("Empirical", "Kong"), col = c("blue", "orange"), pch  =19)
+
+
+## plots for alpha = 4 and alpha = 7 combined
+pdf(file = "gamma-multirep_m3.pdf", height = 5, width = 10)
+load(file = "gamma_multi_rep_m3_alpha4.Rdata")
+
+iter.emp1 <-  iter.emp
+iter.kong1 <- iter.kong
+iter.truth1 <- iter.truth[1]
+means.emp1 <- means.emp
+means.kong1 <- means.kong
+
+load(file = "gamma_multi_rep_m3_alpha7.Rdata")
+iter.emp2 <-  iter.emp
+iter.kong2 <- iter.kong
+iter.truth2 <- iter.truth[1]
+means.emp2 <- means.emp
+means.kong2 <- means.kong
+
+plot(iter.emp1, means.emp1, pch=19, col = "blue", xlab = "Iterations", ylab = "Target Estimate", xlim = range(iter.emp1, iter.kong1, iter.emp2, iter.kong2), ylim = range(means.emp1, means.kong1, means.emp2, means.kong2))
+points(iter.kong1, means.kong1, pch = 19, col = "orange")
+abline(v = iter.truth1, lty=2)
+
+points(iter.emp2, means.emp2, pch = 19, col = "lightblue")
+points(iter.kong2, means.kong2, pch = 19, col = "pink")
+abline(v = iter.truth2, lty=2)
+legend("topright", legend = c("Estimated, a = 4", "Kong, a = 4", "Estimated, a = 7", "Kong, a = 7"), cex=1.5, col = c("blue", "orange", "lightblue", "pink"), pch  =19)
 dev.off()

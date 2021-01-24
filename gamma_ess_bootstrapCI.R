@@ -1,14 +1,14 @@
 library(mcmcse)
 
 shape <- 5  #target alpha
-prop_shape <- seq(4, 9, .5)  #proposal alphas
+prop_shape <- seq(4, 9, .1)  #proposal alphas
 N <- 5e3    #Number of samples
 ess.truth <- rep(0, length(prop_shape))
 ess.kong <- rep(0, length(prop_shape))
 ess.emp <- rep(0, length(prop_shape))
 ess.emp.ci <- matrix(0, nrow = 2, ncol = length(prop_shape))
 ess.kong.ci <- matrix(0, nrow = 2, ncol = length(prop_shape))
-m <- 3  # moment of Gamma distr. to be estimated using IS
+m <- 1  # moment of Gamma distr. to be estimated using IS
 h <- function(x,m) x^m  # x^m
 
 ######### function calculates true N*Variance of SNIS estiamtor ###########
@@ -59,12 +59,12 @@ for (y in 1:length(prop_shape)){
   
 }
 
-pdf(file = "gamma_m3_proposals_CI.pdf")
-plot(prop_shape, ess.emp/N, type = "l", col = "blue", ylim = range(ess.emp, ess.truth, ess.kong)/N)
+pdf(file = "gamma_m1_proposals_CI.pdf")
+plot(prop_shape, ess.emp/N, type = "l", col = "blue", ylab = "ESS/N", xlab = "Proposal shape parameter", ylim = range(ess.emp, ess.truth, ess.kong)/N)
 lines(prop_shape, ess.kong/N, col = "orange")
 lines(prop_shape, ess.truth/N, col = "green")
-segments(x0 = prop_shape, y0 = ess.emp.ci[1,]/N, x1 = prop_shape, y1 = ess.emp.ci[2,]/N, col = adjustcolor("blue", alpha.f=.4))
-segments(x0 = prop_shape, y0 = ess.kong.ci[1,]/N, x1 = prop_shape, y1 = ess.kong.ci[2,]/N, col = adjustcolor("orange", alpha.f=.4))
-legend("topright", legend = c("Empirical", "Kong", "Truth"), col = c("blue", "orange", "green"), lwd=2)
+#segments(x0 = prop_shape, y0 = ess.emp.ci[1,]/N, x1 = prop_shape, y1 = ess.emp.ci[2,]/N, col = adjustcolor("blue", alpha.f=.4))
+#segments(x0 = prop_shape, y0 = ess.kong.ci[1,]/N, x1 = prop_shape, y1 = ess.kong.ci[2,]/N, col = adjustcolor("orange", alpha.f=.4))
+legend("topright", legend = c("Estimated", "Kong", "Truth"), col = c("blue", "orange", "green"), lwd=2)
 dev.off()
 
