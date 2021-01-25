@@ -1,14 +1,14 @@
 library(mcmcse)
 
 shape <- 5  #target alpha
-prop_shape <- seq(4, 9, .1)  #proposal alphas
-N <- 5e3    #Number of samples
+prop_shape <- seq(4, 9, .2)  #proposal alphas
+N <- 1e4    #Number of samples
 ess.truth <- rep(0, length(prop_shape))
 ess.kong <- rep(0, length(prop_shape))
 ess.emp <- rep(0, length(prop_shape))
 ess.emp.ci <- matrix(0, nrow = 2, ncol = length(prop_shape))
 ess.kong.ci <- matrix(0, nrow = 2, ncol = length(prop_shape))
-m <- 1  # moment of Gamma distr. to be estimated using IS
+m <- 3  # moment of Gamma distr. to be estimated using IS
 h <- function(x,m) x^m  # x^m
 
 ######### function calculates true N*Variance of SNIS estiamtor ###########
@@ -58,8 +58,11 @@ for (y in 1:length(prop_shape)){
   ess.kong.ci[,y] <- quantile(boot.kong.ess, probs = c(.05, .95)) #var(boot.kong.ess)
   
 }
+save(ess.emp, ess.kong, ess.truth, file = "gamma-ess_m3.Rdata")
 
-pdf(file = "gamma_m1_proposals_CI.pdf")
+
+
+pdf(file = "gamma_m3_proposals_CI.pdf")
 plot(prop_shape, ess.emp/N, type = "l", col = "blue", ylab = "ESS/N", xlab = "Proposal shape parameter", ylim = range(ess.emp, ess.truth, ess.kong)/N)
 lines(prop_shape, ess.kong/N, col = "orange")
 lines(prop_shape, ess.truth/N, col = "green")
