@@ -53,12 +53,17 @@ h <- function(lambda, beta)
   lambda^(-1/beta) *gamma(1 + 1/beta)
 }
 
+reliability <- function(lambda, beta)
+{
+  exp(-lambda*(1500^beta))
+}
+
 is_ESS <- function(min_ESS, step, loop, N_min, proj.hour, beta_sd){
   
   iter.emp <- rep(N_min, loop)
   iter.kong <- rep(N_min, loop)
-  means.emp <- rep(0, loop)
-  means.kong <- rep(0, loop)
+  means.emp <- matrix(0, nrow = loop, ncol = 2)
+  means.kong <- matrix(0, nrow = loop, ncol = 2)
   ess.emp <- rep(0, loop)
   ess.kong <- rep(0, loop)
   
@@ -71,16 +76,16 @@ is_ESS <- function(min_ESS, step, loop, N_min, proj.hour, beta_sd){
     B <- is[[2]][,2]
     weights <- is[[1]]
     norm_weights <- weights/sum(weights)
-    H <- h(L,B)
-    snis <- sum(H * norm_weights)
+    H <- cbind(h(L,B), reliability(L,B))
+    snis <- colSums(H * norm_weights)
     
-    varIbar <- sum((H - snis)^2 * norm_weights)/N_min
-    emp.var <- sum(norm_weights^2 * (H - snis)^2)
+    varIbar <- (t(H - snis) %*% (norm_weights * (H - snis)))/N_min
+    emp.var <- (t(H - snis) %*% (norm_weights^2 * (H - snis)))
     
-    ess.emp[t] <- N_min*varIbar/emp.var
-    ess.kong[t]  = 1/sum(norm_weights^2)
-    means.emp[t] <- snis
-    means.kong[t] <- snis
+    ess.emp[t] <- N_min*(det(varIbar)/det(emp.var))
+    ess.kong[t]  <- 1/sum(norm_weights^2)
+    means.emp[t,] <- snis
+    means.kong[t,] <- snis
     
     while (ess.emp[t] <= min_ess ||ess.kong[t] <= min_ess){
       
@@ -89,62 +94,79 @@ is_ESS <- function(min_ESS, step, loop, N_min, proj.hour, beta_sd){
       is.more[[2]] <- rbind(is.more[[2]], samp[[2]])
       L <- is.more[[2]][,1]
       B <- is.more[[2]][,2]
-      H <- h(L, B)
+      H <- cbind(h(L,B), reliability(L,B))
       weights <- is.more[[1]]
       norm_weights <- weights/sum(weights)
-      snis <- sum(H * norm_weights)
+      snis <- colSums(H * norm_weights)
       
       if (ess.emp[t] <= min_ess){
         iter.emp[t] <- iter.emp[t] + step
-        varIbar <- sum((H - snis)^2 * norm_weights)/iter.emp[t]
-        emp.var <- sum(norm_weights^2 * (H - snis)^2)
-        ess.emp[t] <- iter.emp[t]*varIbar/emp.var
-        means.emp[t] <- snis
+        varIbar <- (t(H - snis)%*%(norm_weights*(H-snis)))/iter.emp[t]
+        emp.var <- (t(H - snis) %*% (norm_weights^2 * (H - snis)))
+        ess.emp[t] <- iter.emp[t]*(det(varIbar)/det(emp.var))
+        means.emp[t,] <- snis
       }
       
       if (ess.kong[t] <= min_ess){
         iter.kong[t] <- iter.kong[t] + step
         ess.kong[t] <- 1/sum(norm_weights^2)
-        means.kong[t] <- snis
+        means.kong[t,] <- snis
       }
       
     }
   }
-  return(list("kong" = cbind(iter.kong, means.kong, ess.kong), "emp" = cbind(iter.emp, means.emp, ess.emp)))
+  return(list("kong" = cbind(iter.kong, ess.kong, means.kong), "emp" = cbind(iter.emp, ess.emp, means.emp)))
 }
 
-min_ess <- minESS(1)
+min_ess <- minESS(2)
 step <- 10
 N_min <- 5e3
-loop <- 100
+loop <- 10
 
 
 # beta_sd = .2 and .1
 all_h20 <- is_ESS(min_ESS, step, loop, N_min, proj.hour, beta_sd = .2)
 all_h10 <- is_ESS(min_ESS, step, loop, N_min, proj.hour, beta_sd = .1)
-save(all_h10, all_h20, file = "weibull-multirep.Rdata")
+save(all_h10, all_h20, file = "weibull-multirep_hR.Rdata")
+load(file = "weibull-multirep_hR.Rdata")
 
 
-pdf(file = "weibull-multirep.pdf", height = 5, width = 10)
-par (mfrow = c(1,2))
-plot(all_h10$emp[,1], all_h10$emp[,2], pch=19, col = "blue", main = "Beta SD = 0.1", xlab = "Iterations", ylab = "Target Estimate", xlim = range(all_h10$emp[,1], all_h10$kong[,1]), ylim = range(all_h20$emp[,2], all_h20$kong[,2], all_h10$emp[,2], all_h10$kong[,2]))
-points(all_h10$kong[,1], all_h10$kong[,2], pch = 19, col = "orange")
-legend("topright", legend = c("Estimated, a = 4", "Kong, a = 4"), col = c("blue", "orange"), cex=1.2, pch=19)
+pdf(file = "weibull-multirep_sd1.pdf", height = 5, width = 5)
+par(mfrow = c(1,2))
+plot(all_h10$emp[,1], all_h10$emp[,3], pch=19, col = "blue", main = "Beta SD = 0.1, MTTF vs Iterations", xlab = "Iterations", ylab = "Estimated MTTF", xlim = range(all_h10$emp[,1], all_h10$kong[,1]), ylim = range(all_h10$emp[,3], all_h10$kong[,3]))
+points(all_h10$kong[,1], all_h10$kong[,3], pch=19, col = "orange")
+legend("topright", legend = c("Estimated, a = 4", "Kong, a = 4"), col = c("blue", "orange"), cex=1, pch=19)
 
-plot(all_h20$emp[,1], all_h20$emp[,2], pch=19, col = "blue", main = "Beta SD = 0.2", xlab = "Iterations", ylab = "Target Estimate", xlim = range(all_h20$emp[,1], all_h20$kong[,1]), ylim = range(all_h20$emp[,2], all_h20$kong[,2], all_h10$emp[,2], all_h10$kong[,2]))
-points(all_h20$kong[,1], all_h20$kong[,2], pch = 19, col = "orange")
-legend("topright", legend = c("Estimated, a = 4", "Kong, a = 4"), col = c("blue", "orange"), cex=1.2, pch=19)
+plot(all_h10$emp[,1], all_h10$emp[,4], pch=19, col = "blue", main = "Beta SD = 0.1, Reliability vs Iterations", xlab = "Iterations", ylab = "Estimated Reliability", xlim = range(all_h10$emp[,1], all_h10$kong[,1]), ylim = range(all_h10$emp[,4], all_h10$kong[,4]))
+points(all_h10$kong[,1], all_h10$kong[,4], pch=19, col = "orange")
+legend("topright", legend = c("Estimated, a = 4", "Kong, a = 4"), col = c("blue", "orange"), cex=1, pch=19)
+
 dev.off()
 
+
+
+pdf(file = "weibull-multirep_sd2.pdf", height = 5, width = 5)
+par(mfrow = c(1,2))
+plot(all_h20$emp[,1], all_h10$emp[,3], pch=19, col = "blue", main = "Beta SD = 0.2, MTTF vs Iterations", xlab = "Iterations", ylab = "Estimated MTTF", xlim = range(all_h20$emp[,1], all_h20$kong[,1]), ylim = range(all_h20$emp[,3], all_h20$kong[,3]))
+points(all_h20$kong[,1], all_h20$kong[,3], pch=19, col = "orange")
+legend("topright", legend = c("Estimated, a = 4", "Kong, a = 4"), col = c("blue", "orange"), cex=1, pch=19)
+
+plot(all_h20$emp[,1], all_h20$emp[,4], pch=19, col = "blue", main = "Beta SD = 0.1, Reliability vs Iterations", xlab = "Iterations", ylab = "Estimated Reliability", xlim = range(all_h20$emp[,1], all_h20$kong[,1]), ylim = range(all_h20$emp[,4], all_h20$kong[,4]))
+points(all_h20$kong[,1], all_h20$kong[,4], pch=19, col = "orange")
+legend("topright", legend = c("Estimated, a = 4", "Kong, a = 4"), col = c("blue", "orange"), cex=1, pch=19)
+
+dev.off()
+
+
 ########################################################
 ########################################################
-########### ESS vs Bets standard deviation #############
+########### ESS vs Beta standard deviation #############
 ########################################################
 ########################################################
 
 
 N <- 1e4
-SD <- seq(.1, .25, .01)
+SD <- seq(.1, .2, .01)
 reps <- 10
 ess.kong <- matrix(0, nrow = reps, ncol = length(SD))
 ess.emp <- matrix(0, nrow = reps, ncol = length(SD))
@@ -172,9 +194,38 @@ for (y in 1:length(SD))
   }
 }
 
-pdf(file = "weibull-ESSvsBetaSD.pdf", height = 5, width = 5)
-plot(SD, colMeans(ess.emp/N), type = "l", col = "blue", ylab = "ESS/N", xlab = "h parameter", ylim = range(colMeans(ess.emp), colMeans(ess.kong))/N)
+pdf(file = "weibull-ESSvsBetaSD_hMTTF.pdf", height = 5, width = 5)
+plot(SD, colMeans(ess.emp/N), type = "l", main = "ESS/N vs Beta SD for MTTF", col = "blue", ylab = "ESS/N", xlab = "Beta SD", ylim = range(colMeans(ess.emp), colMeans(ess.kong))/N)
 lines(SD, colMeans(ess.kong/N), col = "orange")
 legend("topright", legend = c("Estimated", "Kong"), col = c("blue", "orange"), lty=1)
-dev.off
+dev.off()
+
+for (y in 1:length(SD))
+{
+  print(SD[y])
+  for(i in 1:reps)
+  {
+    is <- joint_draw(N = N, t = proj.hour, h=SD[y])
+    L <- is[[2]][,1]
+    B <- is[[2]][,2]
+    weights <- is[[1]]
+    norm_weights <- weights/sum(weights)
+    H <- reliability(L,B)
+    snis <- sum(H * norm_weights)
+    
+    ## Kong's ESS
+    ess.kong[i,y] <- 1/sum(norm_weights^2)
+    
+    ## Empirical ESS
+    varIbar <- sum((H - snis)^2 * norm_weights)/N
+    emp.var <- sum(norm_weights^2 * (H - snis)^2)
+    ess.emp[i,y] <- N*varIbar/emp.var
+  }
+}
+
+pdf(file = "weibull-ESSvsBetaSD_hR.pdf", height = 5, width = 5)
+plot(SD, colMeans(ess.emp/N), type = "l", main = "ESS/N vs Beta SD for reliability", col = "blue", ylab = "ESS/N", xlab = "h parameter", ylim = range(colMeans(ess.emp), colMeans(ess.kong))/N)
+lines(SD, colMeans(ess.kong/N), col = "orange")
+legend("topright", legend = c("Estimated", "Kong"), col = c("blue", "orange"), lty=1)
+dev.off()
 
