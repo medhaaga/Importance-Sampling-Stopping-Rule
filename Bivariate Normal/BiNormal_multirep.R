@@ -19,9 +19,14 @@ obj.det <- function(par, Lambda){
   return((sqrt(det(Sigma))/(det(Lambda) * sqrt(det(foo))))^2 / det(foo))
 }
 
-lambda <- .5
-rho <- .5
-sigma <- (p+1)/p
+# try another setting with low correlation 
+# but inefficient proposal distribution
+# and see if the results are not so much in our 
+# favor any more. 
+# saving this: lambda = .9, rho = .9, sigma = 3
+lambda <- .9
+rho <- .9
+sigma <- 3#(p+1)/p
 Lambda <- matrix(c(2, lambda*sqrt(2), lambda*sqrt(2), 1), 2, 2)
 Sigma <- matrix(c(sigma, rho*sigma, rho*sigma, sigma), 2, 2)
 plot(ellipse(Lambda) , type = "l", xlim = c(-5,5), ylim = c(-5,5))
@@ -46,7 +51,7 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda){
     is.more <- is
     weights <- dmvnorm(is, mean=rep(0,2), sigma=Lambda)/dmvnorm(is, mean=rep(0,2), sigma = Sigma)   
     norm_weights <- weights/sum(weights)
-    H <- is
+    H <- as.matrix(is, ncol = 2)
     snis <- colSums(H * norm_weights)
     
     true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
@@ -65,7 +70,7 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda){
       
       samp <- rmvnorm(step, mean=rep(0,2), sigma = Sigma)
       is.more <- rbind(is.more, samp)
-      H <- is.more
+      H <- as.matrix(is.more, ncol = 2)
       weights <- dmvnorm(is.more, mean=rep(0,2), sigma=Lambda)/dmvnorm(is.more, mean=rep(0,2), sigma = Sigma)   
       norm_weights <- weights/sum(weights)
       snis <- colSums(H * norm_weights)
@@ -103,7 +108,7 @@ loop <- 100
 
 all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda)
 
-pdf(file = "biNorm-multirep.pdf", height = 5, width = 10)
+pdf(file = "biNorm-multirep-test.pdf", height = 5, width = 10)
 par(mfrow = c(1,2))
 
 plot(all_ESS$emp[,1], all_ESS$emp[,3], pch=19, col = "blue", xlim = range(all_ESS$kong[,1], all_ESS$emp[,1], all_ESS$true[,1]), ylim = range(all_ESS$kong[,3], all_ESS$emp[,3], all_ESS$true[,3]), xlab = "Iterations", ylab = "Component = I")
