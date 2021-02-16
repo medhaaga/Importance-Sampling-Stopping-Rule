@@ -24,22 +24,33 @@ obj.det <- function(par, Lambda){
 # and see if the results are not so much in our 
 # favor any more. 
 # saving this: lambda = .9, rho = .9, sigma = 3
-lambda <- .9
-rho <- .9
+lambda <- .1
+rho <- .1
 sigma <- 3#(p+1)/p
 Lambda <- matrix(c(2, lambda*sqrt(2), lambda*sqrt(2), 1), 2, 2)
 Sigma <- matrix(c(sigma, rho*sigma, rho*sigma, sigma), 2, 2)
+foo <- 2*solve(Lambda) - solve(Sigma)
+det(foo)
+pdf(file = "ellipse_lowCorr.pdf", height = 5, width = 5)
 plot(ellipse(Lambda) , type = "l", xlim = c(-5,5), ylim = c(-5,5))
 lines(ellipse(Sigma), col = "blue")
+dev.off()
 
-is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda){
+
+is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, h=0){
   
   iter.emp <- rep(N_min, loop)
   iter.kong <- rep(N_min, loop)
   iter.true <- rep(N_min, loop)
-  means.emp <- matrix(0, nrow = loop, ncol = 2)
-  means.kong <- matrix(0, nrow = loop, ncol = 2)
-  means.true <- matrix(0, nrow = loop, ncol = 2)
+  if (h==0){
+    means.emp <- matrix(0, nrow = loop, ncol = 2)
+    means.kong <- matrix(0, nrow = loop, ncol = 2)
+    means.true <- matrix(0, nrow = loop, ncol = 2)
+  } else{
+    means.emp <- matrix(0, nrow = loop, ncol = 1)
+    means.kong <- matrix(0, nrow = loop, ncol = 1)
+    means.true <- matrix(0, nrow = loop, ncol = 1)
+  }
   ess.emp <- rep(0, loop)
   ess.kong <- rep(0, loop)
   ess.true <- rep(0, loop)
@@ -51,7 +62,12 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda){
     is.more <- is
     weights <- dmvnorm(is, mean=rep(0,2), sigma=Lambda)/dmvnorm(is, mean=rep(0,2), sigma = Sigma)   
     norm_weights <- weights/sum(weights)
-    H <- as.matrix(is, ncol = 2)
+    if (h==0)
+      H <- as.matrix(is, ncol = 2) else if(h==1)
+        H <- as.matrix(is[,1], ncol = 1) else
+          H <- as.matrix(is[,2], ncol = 1)
+    
+    
     snis <- colSums(H * norm_weights)
     
     true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
@@ -70,7 +86,10 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda){
       
       samp <- rmvnorm(step, mean=rep(0,2), sigma = Sigma)
       is.more <- rbind(is.more, samp)
-      H <- as.matrix(is.more, ncol = 2)
+      if (h==0)
+        H <- as.matrix(is.more, ncol = 2) else if(h==1)
+          H <- as.matrix(is.more[,1], ncol = 1) else
+            H <- as.matrix(is.more[,2], ncol = 1)
       weights <- dmvnorm(is.more, mean=rep(0,2), sigma=Lambda)/dmvnorm(is.more, mean=rep(0,2), sigma = Sigma)   
       norm_weights <- weights/sum(weights)
       snis <- colSums(H * norm_weights)
@@ -104,11 +123,11 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda){
 min_ess <- minESS(2)
 step <- 100
 N_min <- 1e3
-loop <- 100
+loop <- 20
 
-all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda)
+all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda, h=0)
 
-pdf(file = "biNorm-multirep-test.pdf", height = 5, width = 10)
+pdf(file = "biNorm-multirep-bivariate_lowCorr.pdf", height = 5, width = 10)
 par(mfrow = c(1,2))
 
 plot(all_ESS$emp[,1], all_ESS$emp[,3], pch=19, col = "blue", xlim = range(all_ESS$kong[,1], all_ESS$emp[,1], all_ESS$true[,1]), ylim = range(all_ESS$kong[,3], all_ESS$emp[,3], all_ESS$true[,3]), xlab = "Iterations", ylab = "Component = I")
@@ -121,4 +140,75 @@ points(all_ESS$kong[,1], all_ESS$kong[,4], pch = 19, col = "orange")
 points(all_ESS$true[,1], all_ESS$true[,4], pch = 19, col = "green")
 legend("topright", legend = c("Truth", "Empirical", "Kong"), col = c("green", "blue", "orange"), pch=19)
 
+dev.off()
+
+min_ess <- minESS(1)
+step <- 100
+N_min <- 1e3
+loop <- 20
+
+
+pdf(file = "biNorm-multirep-univariate_lowCorr.pdf", height = 5, width = 10)
+par(mfrow = c(1,2))
+all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda, h=1)
+
+plot(all_ESS$emp[,1], all_ESS$emp[,3], pch=19, col = "blue", xlim = range(all_ESS$kong[,1], all_ESS$emp[,1], all_ESS$true[,1]), ylim = range(all_ESS$kong[,3], all_ESS$emp[,3], all_ESS$true[,3]), xlab = "Iterations", ylab = "Component = I")
+points(all_ESS$kong[,1], all_ESS$kong[,3], pch = 19, col = "orange")
+points(all_ESS$true[,1], all_ESS$true[,3], pch = 19, col = "green")
+legend("topright", legend = c("Truth", "Empirical", "Kong"), col = c("green", "blue", "orange"), pch=19)
+
+all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda, h=2)
+
+plot(all_ESS$emp[,1], all_ESS$emp[,3], pch=19, col = "blue", xlim = range(all_ESS$kong[,1], all_ESS$emp[,1], all_ESS$true[,1]), ylim = range(all_ESS$kong[,3], all_ESS$emp[,3], all_ESS$true[,3]), xlab = "Iterations", ylab = "Component = II")
+points(all_ESS$kong[,1], all_ESS$kong[,3], pch = 19, col = "orange")
+points(all_ESS$true[,1], all_ESS$true[,3], pch = 19, col = "green")
+legend("topright", legend = c("Truth", "Empirical", "Kong"), col = c("green", "blue", "orange"), pch=19)
+dev.off()
+
+
+
+lambda <- .1
+sigma <- 3#(p+1)/p
+rho <- seq(0, .75, .05)
+
+true.ess <- matrix(0, nrow = 3, ncol = length(rho))
+for (i in 1:length(rho)){
+  corr <- rho[i]
+  Lambda <- matrix(c(2, lambda*sqrt(2), lambda*sqrt(2), 1), 2, 2)
+  Sigma <- matrix(c(sigma, corr*sigma, corr*sigma, sigma), 2, 2)
+  true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
+  var.f <- Lambda  
+  true.ess[1,i] <- det(var.f)/det(true.var)
+  true.ess[2,i] <- var.f[1,1]/true.var[1,1]
+  true.ess[3,i] <- var.f[2,2]/true.var[2,2]
+}
+
+pdf(file = "trueESSvsRho_lowCorr.pdf", width = 5, height = 5)
+plot(rho, true.ess[1,], type = "l", lwd=2, ylim = range(true.ess), ylab = "True ESS")
+lines(rho, true.ess[2,], col = "blue", lwd=2)
+lines(rho, true.ess[3,], col = "green", lwd=2)
+legend("bottomleft", legend = c("Bivariate", "Comp-1", "Comp2"), col = c("black", "blue", "green"), lwd=2)
+dev.off()
+
+lambda <- .9
+sigma <- 3#(p+1)/p
+rho <- seq(0, .9, .05)
+
+true.ess <- matrix(0, nrow = 3, ncol = length(rho))
+for (i in 1:length(rho)){
+  corr <- rho[i]
+  Lambda <- matrix(c(2, lambda*sqrt(2), lambda*sqrt(2), 1), 2, 2)
+  Sigma <- matrix(c(sigma, corr*sigma, corr*sigma, sigma), 2, 2)
+  true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
+  var.f <- Lambda  
+  true.ess[1,i] <- sum(var.f)/det(true.var)
+  true.ess[2,i] <- var.f[1,1]/true.var[1,1]
+  true.ess[3,i] <- var.f[2,2]/true.var[2,2]
+}
+
+pdf(file = "trueESSvsRho_highCorr.pdf", width = 5, height = 5)
+plot(rho, true.ess[1,], type = "l", lwd=2, ylim = range(true.ess), ylab = "True ESS")
+lines(rho, true.ess[2,], col = "blue", lwd=2)
+lines(rho, true.ess[3,], col = "green", lwd=2)
+legend("topleft", legend = c("Bivariate", "Comp-1", "Comp2"), col = c("black", "blue", "green"), lwd=2)
 dev.off()
