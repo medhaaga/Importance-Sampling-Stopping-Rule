@@ -27,17 +27,19 @@ obj.det <- function(par, Lambda){
 lambda <- .1
 rho <- .1
 sigma <- 3#(p+1)/p
-Lambda <- matrix(c(2, lambda*sqrt(2), lambda*sqrt(2), 1), 2, 2)
+Lambda <- matrix(c(3, lambda*sqrt(3), lambda*sqrt(3), 1), 2, 2)
 Sigma <- matrix(c(sigma, rho*sigma, rho*sigma, sigma), 2, 2)
 foo <- 2*solve(Lambda) - solve(Sigma)
 det(foo)
-pdf(file = "ellipse_lowCorr.pdf", height = 5, width = 5)
-plot(ellipse(Lambda) , type = "l", xlim = c(-5,5), ylim = c(-5,5))
+
+pdf(file = "ellipse_highCorr_highCorr.pdf", height = 5, width = 5)
+plot(ellipse(Lambda) , type = "l", xlim = c(-8,8), ylim = c(-8,8))
 lines(ellipse(Sigma), col = "blue")
+lines(ellipse(var.is(Sigma, Lambda)), col = "red")
 dev.off()
 
 
-is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, h=0){
+is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, h=0, p){
   
   iter.emp <- rep(N_min, loop)
   iter.kong <- rep(N_min, loop)
@@ -75,9 +77,9 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, h=0){
     varIbar <- (t(H - snis) %*% (norm_weights * (H - snis)))/N_min
     emp.var <- (t(H - snis) %*% (norm_weights^2 * (H - snis)))
     
-    ess.emp[t] <- N_min*(det(varIbar)/det(emp.var))
+    ess.emp[t] <- N_min*((det(varIbar)/det(emp.var))^(1/p))
     ess.kong[t]  <- 1/sum(norm_weights^2)
-    ess.true[t] <- N_min*(det(var.f)/det(true.var))
+    ess.true[t] <- N_min*((det(var.f)/det(true.var))^(1/p))
     means.emp[t,] <- snis
     means.kong[t,] <- snis
     means.true[t,] <- snis
@@ -98,7 +100,7 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, h=0){
         iter.emp[t] <- iter.emp[t] + step
         varIbar <- (t(H - snis)%*%(norm_weights*(H-snis)))/iter.emp[t]
         emp.var <- (t(H - snis) %*% (norm_weights^2 * (H - snis)))
-        ess.emp[t] <- iter.emp[t]*(det(varIbar)/det(emp.var))
+        ess.emp[t] <- iter.emp[t]*((det(varIbar)/det(emp.var))^(1/p))
         means.emp[t,] <- snis
       }
       
@@ -110,7 +112,7 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, h=0){
       
       if (ess.true[t] <= min_ess){
         iter.true[t] <- iter.true[t] + step
-        ess.true[t] <- iter.true[t]*det(var.f)/det(true.var)
+        ess.true[t] <- iter.true[t]*(det(var.f)/det(true.var)^(1/p))
         means.true[t,] <- snis
       }
       
@@ -122,10 +124,10 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, h=0){
 
 min_ess <- minESS(2)
 step <- 100
-N_min <- 1e3
+N_min <- 5e3
 loop <- 20
 
-all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda, h=0)
+all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda, h=0, p=2)
 
 pdf(file = "biNorm-multirep-bivariate_lowCorr.pdf", height = 5, width = 10)
 par(mfrow = c(1,2))
@@ -143,21 +145,21 @@ legend("topright", legend = c("Truth", "Empirical", "Kong"), col = c("green", "b
 dev.off()
 
 min_ess <- minESS(1)
-step <- 100
-N_min <- 1e3
+step <- 10
+N_min <- 3e3
 loop <- 20
 
 
 pdf(file = "biNorm-multirep-univariate_lowCorr.pdf", height = 5, width = 10)
 par(mfrow = c(1,2))
-all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda, h=1)
+all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda, h=1, p=2)
 
 plot(all_ESS$emp[,1], all_ESS$emp[,3], pch=19, col = "blue", xlim = range(all_ESS$kong[,1], all_ESS$emp[,1], all_ESS$true[,1]), ylim = range(all_ESS$kong[,3], all_ESS$emp[,3], all_ESS$true[,3]), xlab = "Iterations", ylab = "Component = I")
 points(all_ESS$kong[,1], all_ESS$kong[,3], pch = 19, col = "orange")
 points(all_ESS$true[,1], all_ESS$true[,3], pch = 19, col = "green")
 legend("topright", legend = c("Truth", "Empirical", "Kong"), col = c("green", "blue", "orange"), pch=19)
 
-all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda, h=2)
+all_ESS <- is_ESS(min_ESS, step, loop, N_min, Sigma, Lambda, h=2, p=2)
 
 plot(all_ESS$emp[,1], all_ESS$emp[,3], pch=19, col = "blue", xlim = range(all_ESS$kong[,1], all_ESS$emp[,1], all_ESS$true[,1]), ylim = range(all_ESS$kong[,3], all_ESS$emp[,3], all_ESS$true[,3]), xlab = "Iterations", ylab = "Component = II")
 points(all_ESS$kong[,1], all_ESS$kong[,3], pch = 19, col = "orange")
@@ -166,24 +168,27 @@ legend("topright", legend = c("Truth", "Empirical", "Kong"), col = c("green", "b
 dev.off()
 
 
+#####################################################
+###### Univarate and bivariate true ESS vs rho ######
+#####################################################
 
 lambda <- .1
 sigma <- 3#(p+1)/p
-rho <- seq(0, .75, .05)
+rho <- seq(0, .65, .05)
 
 true.ess <- matrix(0, nrow = 3, ncol = length(rho))
 for (i in 1:length(rho)){
   corr <- rho[i]
-  Lambda <- matrix(c(2, lambda*sqrt(2), lambda*sqrt(2), 1), 2, 2)
+  Lambda <- matrix(c(3, lambda*sqrt(3), lambda*sqrt(3), 1), 2, 2)
   Sigma <- matrix(c(sigma, corr*sigma, corr*sigma, sigma), 2, 2)
   true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
   var.f <- Lambda  
-  true.ess[1,i] <- det(var.f)/det(true.var)
+  true.ess[1,i] <- (det(var.f)/det(true.var))^(1/p)
   true.ess[2,i] <- var.f[1,1]/true.var[1,1]
   true.ess[3,i] <- var.f[2,2]/true.var[2,2]
 }
 
-pdf(file = "trueESSvsRho_lowCorr.pdf", width = 5, height = 5)
+pdf(file = "trueESSvsRho_lowCorr_det.pdf", width = 5, height = 5)
 plot(rho, true.ess[1,], type = "l", lwd=2, ylim = range(true.ess), ylab = "True ESS")
 lines(rho, true.ess[2,], col = "blue", lwd=2)
 lines(rho, true.ess[3,], col = "green", lwd=2)
@@ -197,18 +202,20 @@ rho <- seq(0, .9, .05)
 true.ess <- matrix(0, nrow = 3, ncol = length(rho))
 for (i in 1:length(rho)){
   corr <- rho[i]
-  Lambda <- matrix(c(2, lambda*sqrt(2), lambda*sqrt(2), 1), 2, 2)
+  Lambda <- matrix(c(3, lambda*sqrt(3), lambda*sqrt(3), 1), 2, 2)
   Sigma <- matrix(c(sigma, corr*sigma, corr*sigma, sigma), 2, 2)
   true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
   var.f <- Lambda  
-  true.ess[1,i] <- sum(var.f)/det(true.var)
+  true.ess[1,i] <- det((var.f))^.5/det((true.var))^.5
   true.ess[2,i] <- var.f[1,1]/true.var[1,1]
   true.ess[3,i] <- var.f[2,2]/true.var[2,2]
 }
 
-pdf(file = "trueESSvsRho_highCorr.pdf", width = 5, height = 5)
+pdf(file = "trueESSvsRho_highCorr_det.pdf", width = 5, height = 5)
 plot(rho, true.ess[1,], type = "l", lwd=2, ylim = range(true.ess), ylab = "True ESS")
 lines(rho, true.ess[2,], col = "blue", lwd=2)
 lines(rho, true.ess[3,], col = "green", lwd=2)
 legend("topleft", legend = c("Bivariate", "Comp-1", "Comp2"), col = c("black", "blue", "green"), lwd=2)
 dev.off()
+
+
