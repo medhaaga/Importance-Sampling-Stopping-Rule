@@ -18,7 +18,7 @@ obj.det <- function(par, Lambda){
 
 ##### Fixing target covariance matrix #################
 
-p <- 10
+p <- 3
 sigma <- c(rep(2,ceiling(p/2)), rep(1, floor(p/2)))
 lambda <- .6
 Lambda <- diag(sigma)
@@ -155,98 +155,129 @@ loop <- 20
 min_ess <- minESS(p, eps = 0.1)
 N_min <- round(min_ess/2)
 all_ESS1 <- list()
-for (i in 0:p){
+all_ESS1[[1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=0, p=p)
+for (i in 1:p){
+  min_ess <- minESS(1, eps = 0.1)
   all_ESS1[[i+1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=i, p=p)
 }
-save(all_ESS1, file = "ESS_eps1.Rdata")
+save(all_ESS1, file = paste("ESS_eps1_p", p, ".Rdata", sep = ""))
 
 ### Epsilon = 0.07
 min_ess <- minESS(p, eps = 0.08)
 N_min <- round(min_ess/2)
-all_ESS2 <- list()
-for (i in 0:p){
+all_ESS2[[1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=0, p=p)
+for (i in 1:p){
+  min_ess <- minESS(1, eps = 0.08)
   all_ESS2[[i+1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=i, p=p)
 }
-save(all_ESS2, file = "ESS_eps2.Rdata")
+save(all_ESS2, file = paste("ESS_eps2_p", p, ".Rdata", sep = ""))
 
 
 
 ### Epsilon = 0.04
 min_ess <- minESS(p, eps = 0.06)
 N_min <- round(min_ess/2)
-all_ESS3 <- list()
-for (i in 0:p){
+all_ESS3[[1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=0, p=p)
+for (i in 1:p){
+  min_ess <- minESS(1, eps = 0.06)
   all_ESS3[[i+1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=i, p=p)
 }
-save(all_ESS3, file = "ESS_eps3.Rdata")
+save(all_ESS3, file = paste("ESS_eps3_p", p, ".Rdata", sep = ""))
 
 ### Epsilon = 0.01
 min_ess <- minESS(p, eps = 0.04)
 N_min <- round(min_ess/2)
-all_ESS4 <- list()
-for (i in 0:p){
+all_ESS4[[1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=0, p=p)
+for (i in 1:p){
+  min_ess <- minESS(1, eps = 0.04)
   all_ESS4[[i+1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=i, p=p)
 }
-save(all_ESS4, file = "ESS_eps4.Rdata")
+save(all_ESS4, file = paste("ESS_eps4_p", p, ".Rdata", sep = ""))
 
 ### Epsilon = 0.01
 min_ess <- minESS(p, eps = 0.03)
 N_min <- round(min_ess/2)
-all_ESS5 <- list()
-for (i in 0:p){
+all_ESS5[[1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=0, p=p)
+for (i in 1:p){
+  min_ess <- minESS(1, eps = 0.03)
   all_ESS5[[i+1]] <- is_ESS(min_ess, step, loop, N_min, Sigma, Lambda, h=i, p=p)
 }
-save(all_ESS5, file = "ESS_eps5.Rdata")
+save(all_ESS5, file = paste("ESS_eps5_p", p, ".Rdata", sep = ""))
 
 #################################################################
 #################################################################
 
-load(file = "ESS_eps1.Rdata")
-load(file = "ESS_eps2.Rdata")
-load(file = "ESS_eps3.Rdata")
-load(file = "ESS_eps4.Rdata")
-load(file = "ESS_eps5.Rdata")
+for (i in 1:5)
+  load(file = paste("ESS_eps", i, "_p", p, ".Rdata", sep = ""))
 
 SE1 <- matrix(0, nrow = p+1, ncol = loop)
 for (i in 1:(p+1))
-  SE1[i,] <- apply(as.matrix(all_ESS1[[i]]$emp[,-c(1,2)], row = loop), 1, norm, '2')
+  SE1[i,] <- apply(as.matrix(all_ESS1[[i]]$emp[,3], row = loop), 1, norm, '2')
 SE2 <- matrix(0, nrow = p+1, ncol = loop)
 for (i in 1:(p+1))
-  SE2[i,] <- apply(as.matrix(all_ESS2[[i]]$emp[,-c(1,2)], row = loop), 1, norm, '2')
+  SE2[i,] <- apply(as.matrix(all_ESS2[[i]]$emp[,3], row = loop), 1, norm, '2')
 SE3 <- matrix(0, nrow = p+1, ncol = loop)
 for (i in 1:(p+1))
-  SE3[i,] <- apply(as.matrix(all_ESS3[[i]]$emp[,-c(1,2)], row = loop), 1, norm, '2')
+  SE3[i,] <- apply(as.matrix(all_ESS3[[i]]$emp[,3], row = loop), 1, norm, '2')
 SE4 <- matrix(0, nrow = p+1, ncol = loop)
 for (i in 1:(p+1))
-  SE4[i,] <- apply(as.matrix(all_ESS4[[i]]$emp[,-c(1,2)], row = loop), 1, norm, '2')
+  SE4[i,] <- apply(as.matrix(all_ESS4[[i]]$emp[,3], row = loop), 1, norm, '2')
 SE5 <- matrix(0, nrow = p+1, ncol = loop)
 for (i in 1:(p+1))
-  SE5[i,] <- apply(as.matrix(all_ESS5[[i]]$emp[,-c(1,2)], row = loop), 1, norm, '2')
+  SE5[i,] <- apply(as.matrix(all_ESS5[[i]]$emp[,3], row = loop), 1, norm, '2')
 
 
 min_ess_eps <- c(minESS(p, eps = .1), minESS(p, eps=.08), minESS(p, eps=.06), minESS(p, eps=.04), minESS(p, eps=.03))
 truth <- min_ess_eps/((det(Lambda)/det(var.is(Sigma, Lambda)))^(1/p))
   
   
-pdf(file = "multivariateNormal-multirep.pdf")
-plot(all_ESS1[[1]]$emp[,1], SE1[1,], pch=19, col = "blue", xlim = range(truth[1], truth[5], all_ESS1[[1]]$emp[,1], all_ESS5[[1]]$emp[,1]), ylim = range(SE1, SE2, SE3, SE4), xlab = "Iterations", ylab = "Squared Error")
+pdf(file = paste("multivariateNormal-multirep_p", p, ".pdf", sep = ""))
+
+plot(all_ESS1[[1]]$emp[,1], SE1[1,], pch=19, col = "blue", xlim = range(truth[1], truth[5], all_ESS1[[1]]$emp[,1], all_ESS5[[1]]$emp[,1], all_ESS1[[2]]$emp[,1], all_ESS5[[2]]$emp[,1]), ylim = range(SE1, SE2, SE3, SE4), xlab = "Iterations", ylab = "Squared Error")
 points(all_ESS2[[1]]$emp[,1], SE2[1,], pch=19, col = "green")
 points(all_ESS3[[1]]$emp[,1], SE3[1,], pch=19, col = "orange")
 points(all_ESS4[[1]]$emp[,1], SE4[1,], pch=19, col = "pink")
-points(all_ESS5[[1]]$emp[,1], SE4[1,], pch=19, col = "red")
-for (i in 1:p){
-  points(all_ESS1[[i+1]]$emp[,1], SE1[i+1,], pch = 1, col = adjustcolor("blue", alpha.f = 0.3))
-  points(all_ESS2[[i+1]]$emp[,1], SE2[i+1,], pch = 1, col = adjustcolor("green", alpha.f = 0.3))
-  points(all_ESS3[[i+1]]$emp[,1], SE3[i+1,], pch = 1, col = adjustcolor("orange", alpha.f = 0.3))
-  points(all_ESS4[[i+1]]$emp[,1], SE4[i+1,], pch = 1, col = adjustcolor("pink", alpha.f = 0.3))
-  points(all_ESS5[[i+1]]$emp[,1], SE5[i+1,], pch = 1, col = adjustcolor("red", alpha.f = 0.3))
-}
+points(all_ESS5[[1]]$emp[,1], SE5[1,], pch=19, col = "red")
+
+points(all_ESS1[[2]]$emp[,1], SE1[2,], pch = 1, col = adjustcolor("blue", alpha.f = 0.3))
+points(all_ESS2[[2]]$emp[,1], SE2[2,], pch = 1, col = adjustcolor("green", alpha.f = 0.3))
+points(all_ESS3[[2]]$emp[,1], SE3[2,], pch = 1, col = adjustcolor("orange", alpha.f = 0.3))
+points(all_ESS4[[2]]$emp[,1], SE4[2,], pch = 1, col = adjustcolor("pink", alpha.f = 0.3))
+points(all_ESS5[[2]]$emp[,1], SE5[2,], pch = 1, col = adjustcolor("red", alpha.f = 0.3))
+
 abline(v = truth[1], lty=2, col = "blue")
 abline(v = truth[2], lty=2, col = "green")
 abline(v = truth[3], lty=2, col = "orange")
 abline(v = truth[4], lty=2, col = "pink")
 abline(v = truth[5], lty=2, col = "red")
+legend("topright", legend = c("epsilon = 0.1", "epsilon = 0.08", "epsilon = 0.06", "epsilon = 0.04", "epsilon = 0.03"), col = c("blue", "green", "orange", "pink", "red"), pch = 19)
 dev.off()
+
+
+pdf(file = paste("multivariateNormal-multirep_estimates_p", p, ".pdf", sep = ""))
+
+plot(all_ESS1[[1]]$emp[,1], all_ESS1[[1]]$emp[,3], pch=19, col = "blue", 
+     xlim = range(truth[1], truth[5], all_ESS1[[1]]$emp[,1], all_ESS5[[1]]$emp[,1], all_ESS1[[2]]$emp[,1], all_ESS5[[2]]$emp[,1]), ylim = range(all_ESS1[[1]]$emp[,3], all_ESS5[[1]]$emp[,3], all_ESS1[[2]]$emp[,3], all_ESS1[[2]]$emp[,3]), xlab = "Iterations", ylab = "Squared Error")
+points(all_ESS2[[1]]$emp[,1], all_ESS2[[1]]$emp[,3], pch=19, col = "green")
+points(all_ESS3[[1]]$emp[,1], all_ESS3[[1]]$emp[,3], pch=19, col = "orange")
+points(all_ESS4[[1]]$emp[,1], all_ESS4[[1]]$emp[,3], pch=19, col = "pink")
+points(all_ESS5[[1]]$emp[,1], all_ESS5[[1]]$emp[,3], pch=19, col = "red")
+
+points(all_ESS1[[2]]$emp[,1], all_ESS1[[2]]$emp[,3], pch = 1, col = adjustcolor("blue", alpha.f = 0.3))
+points(all_ESS2[[2]]$emp[,1], all_ESS2[[2]]$emp[,3], pch = 1, col = adjustcolor("green", alpha.f = 0.3))
+points(all_ESS3[[2]]$emp[,1], all_ESS3[[2]]$emp[,3], pch = 1, col = adjustcolor("orange", alpha.f = 0.3))
+points(all_ESS4[[2]]$emp[,1], all_ESS4[[2]]$emp[,3], pch = 1, col = adjustcolor("pink", alpha.f = 0.3))
+points(all_ESS5[[2]]$emp[,1], all_ESS5[[2]]$emp[,3], pch = 1, col = adjustcolor("red", alpha.f = 0.3))
+
+abline(v = truth[1], lty=2, col = "blue")
+abline(v = truth[2], lty=2, col = "green")
+abline(v = truth[3], lty=2, col = "orange")
+abline(v = truth[4], lty=2, col = "pink")
+abline(v = truth[5], lty=2, col = "red")
+abline(h = 0, lty=2, col = "black")
+legend("topright", legend = c("epsilon = 0.1", "epsilon = 0.08", "epsilon = 0.06", "epsilon = 0.04", "epsilon = 0.03"), col = c("blue", "green", "orange", "pink", "red"), pch = 19)
+dev.off()
+
 
 #pdf(file = "biNorm-multirep-bivariate_setting3.pdf", height = 5, width = 10)
 #par(mfrow = c(1,2))
@@ -293,6 +324,7 @@ dev.off()
 
 ##### Fixing target covariance matrix #################
 
+p <- 10
 sigma <- c(rep(2,ceiling(p/2)), rep(1, floor(p/2)))
 lambda <- .6
 Lambda <- diag(sigma)
@@ -320,7 +352,7 @@ for (i in 1:(p-1)){
 foo <- 2*solve(Lambda) - solve(Sigma)
 det(foo)
 
-rho <- seq(.3, .8, .01)
+rho <- seq(.3, .7, .01)
 true.ess <- matrix(0, nrow = p+1, ncol = length(rho))
 for (t in 1:length(rho)){
   corr <- rho[t]
@@ -339,10 +371,10 @@ for (t in 1:length(rho)){
   }
 }
 
-pdf(file = "multiNormal-trueESSvsRho_det.pdf", width = 5, height = 5)
+pdf(file = paste("multiNormal-trueESSvsRho_det_p", p, ".pdf", sep = ""), width = 5, height = 5)
 
 plot(rho, true.ess[1,], type = "l", lwd=2, ylim = range(true.ess), ylab = "True ESS")
 for (i in 1:p)
   lines(rho, true.ess[i+1,], col = adjustcolor("blue", alpha.f = 0.3), lwd=2)
-legend("bottomleft", legend = c("Bivariate", "Univariates"), col = c("black", adjustcolor("blue", alpha.f = 0.3)), lwd=2)
+legend("topleft", legend = c("Multivariate", "Univariates"), col = c("black", adjustcolor("blue", alpha.f = 0.3)), lwd=2)
 dev.off()
