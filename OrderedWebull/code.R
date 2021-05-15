@@ -29,6 +29,7 @@ pi1_samp <- function(a, b, A, m){
     Z[i] <- rgamma(n=1, shape=A[i], rate=1)
   Y <- Z/sum(Z)
   Lambda <- Y*X
+  Lambda <- sort(Lambda, decreasing = FALSE)
   return(Lambda)
 }
 
@@ -37,7 +38,7 @@ pi1_samp <- function(a, b, A, m){
 g <- function(lambda, failures, J, D, S, org.a, org.b, m){
   foo <- 1
   for (i in 1:m+1){
-    foo <- foo * ((lambda[i]^(failures[i] - J)) * exp(-lambda[i] * (D[i] - S)))
+    foo <- foo * ((lambda[i]^(failures[i+1] - J)) * exp(-lambda[i] * (D[i] - S)))
   }
   foo <- foo/((org.b + S)^(org.a + (m+1)*J))
 }
@@ -57,7 +58,7 @@ is <- function(m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress,
       D[i] <- ((n - n_bar[i+1])*(stress[i+1]^alpha)) + ((n - n_bar[i])*(stress[i]^alpha)) + sum(t[(n_bar[i]+1):n_bar[i+1]]^alpha)
     }
     S <- min(D)
-    lambda <- pi1_samp(org.a + (m+1)*J, org.b + S, org.A + J, m)
+    lambda <- pi1_samp((org.a + (m+1)*J), (org.b + S), (org.A + J), m)
     samp[k,] <- c(alpha, lambda)
     weights[k] <- g(lambda, failures, J, D, S, org.a, org.b, m)
   }
@@ -74,6 +75,34 @@ stress <- c(0, .3, .5, .7, 1)
 m <- 3
 n <- 14
 r <- 14
+
+
+####### hyperparams for non-informative priors ###########
+shape.a <- 1e-3
+shape.b <- 1e-3
+org.a <- 1e-3
+org.b <- 1e-3
+org.A <- rep(1, m+1)
+
+
+n_bar <- rep(0, m+2)
+for (i in 1:(m+2)) 
+  n_bar[i] <- sum(failures[1:i])
+
+M <- 1000
+is.samp_weights = is(m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, M)
+colSums(is.samp_weights$samp*is.samp_weights$weights)
+
+
+
+
+t <- c(91, 93, 94, 98.2, 115.81, 116, 116.5, 117.25, 126.75, 127.5, 154.33, 159.5, 164, 184.14, 188.33)
+t <- (t-80)/150
+failures <- c(0, 4, 6, 0, 3, 2)
+stress <- c(0, .2, .33, .46, .6, 1)
+m <- 4
+n <- 15
+r <- 15
 
 
 ####### hyperparams for non-informative priors ###########
