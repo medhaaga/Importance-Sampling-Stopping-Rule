@@ -65,7 +65,7 @@ is <- function(m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress,
     samp[k,] <- c(alpha, lambda)
     weights[k] <- g(lambda, failures, J, D, S, ord.a, ord.b, m)
   }
-  weights <- weights/sum(weights)
+  weights <- weights #/sum(weights)
   return (list("samp" = samp, "weights" = weights))
 }
 
@@ -95,7 +95,8 @@ is_ESS <- function(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a,
     is.samp_weights <- is(m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, N_min)
     is.samp <- is.samp_weights$samp
     is.more <- is.samp
-    norm_weights <- is.samp_weights$weights
+    run_weights <- is.samp_weights$weights
+    norm_weights <- run_weights / sum(run_weights )
     
     if (h==0)
       H <- as.matrix(is.samp, ncol = p) 
@@ -124,7 +125,8 @@ is_ESS <- function(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a,
         if(h==i)
           H <- as.matrix(is.more[,i], ncol = 1)
       }
-      norm_weights <- c(norm_weights, more.samp$weights)
+      run_weights <- c(run_weights, more.samp$weights)
+      norm_weights <- run_weights / sum(run_weights )
       snis <- colSums(H * norm_weights)
       
       if (ess.emp[j] <= min_ess){
@@ -159,10 +161,11 @@ r <- 14
 p <- m+2
 
 ####### hyperparams for non-informative priors ###########
-shape.a <- 1
-shape.b <- 1
-ord.a <- 1
-ord.b <- 1
+val <- 5
+shape.a <- val 
+shape.b <- val 
+ord.a <- val 
+ord.b <- val 
 ord.A <- rep(1, m+1)
 
 
@@ -171,6 +174,48 @@ for (i in 1:(m+2))
   n_bar[i] <- sum(failures[1:i])
 
 
+reps <- 1
+kong <- rep(0, reps)
+multESS <- rep(0, reps)
+uniESS <- matrix(0, nrow = reps, ncol = 5)
+M <- 1e4
+for(l in 1:reps)
+{
+  print(l)
+  sim <- is(m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, M)
+  run_weights <- sim$weights
+  norm_weights <- run_weights / sum(run_weights )
+  
+  kong[l] <- 1/sum(norm_weights^2)
+  
+  H <- sim$samp
+  snis <- colSums(H * norm_weights)
+  
+  varIbar <- (t(H - snis) %*% (norm_weights * (H - snis)))/M
+  emp.var <- (t(H - snis) %*% (norm_weights^2 * (H - snis)))
+  
+  multESS[l] <- M*((det(varIbar)/det(emp.var))^(1/p))
+  uniESS[l,] <- M* diag(varIbar)/ diag(emp.var)
+  # ess.kong[j]  <- 1/sum(norm_weights^2)  ##comment to not calculate kong
+  # means.emp[j,] <- snis
+  # means.kong[j,] <- snis   ##comment to not calculate kong  
+}
+
+plot(kong, col = "red", ylim = range(c(kong, multESS, uniESS)))
+lines(multESS, col = "blue")
+for(k in 1:5)
+{
+  lines(uniESS[,k], col = "green")
+}
+
+ind <- c(2,3)
+plot(ellipse(x = varIbar, which = ind), type= 'l', asp = 1)
+lines(ellipse(x = emp.var, which = ind), type= 'l', col = "red")
+lines(ellipse(x = cov(sim$samp[,-1])/M, which = ind), type= 'l', col = "blue")
+foo1 <- is(m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, 1e3)
+foo2 <- is(m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, 1e5)
+1/sum(foo1$weights^2)
+1/sum(foo2$weights^2)
 step <- 1e3
 loop <- 20
 
@@ -178,6 +223,8 @@ loop <- 20
 ###########################################################
 ############ Termination point vs epsilon ##############################
 ###########################################################
+
+
 
 ### Epsilon = 0.1
 min_ess <- minESS(p, eps = 0.1)
