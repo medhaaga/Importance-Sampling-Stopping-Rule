@@ -257,8 +257,8 @@ save(kong, uniESS1, uniESS2, multESS1, multESS2, file = "ESSvsSampSize_objects_k
 ############### Run from here after loading objects #################
 load(file = "ESSvsSampSize_objects_kong_uni_mult.Rdata")
 se.kong <- 2*apply(kong/samp_size, 2, sd)
-se.H1 <- 2*apply(multESS1/samp_size, 2, sd)/sqrt(10)
-se.H2 <- 2*apply(multESS2/samp_size, 2, sd)/sqrt(10)
+se.H1 <- 2*apply(multESS1/samp_size, 2, sd)/sqrt(reps)
+se.H2 <- 2*apply(multESS2/samp_size, 2, sd)/sqrt(reps)
 kong_means <- rowMeans(kong/samp_size)
 multESS1_means <- rowMeans(multESS1/samp_size)
 multESS2_means <- rowMeans(multESS2/samp_size)
