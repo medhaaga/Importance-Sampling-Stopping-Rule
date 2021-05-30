@@ -1,6 +1,6 @@
 set.seed(1)
 library(mcmcse)
-library(ellipse)
+library(corrplot)
 ################ posterior density (unnormalised) ###############
 posterior <- function(alpha, Lambda, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, n_bar, stress, t)
 {
@@ -104,19 +104,23 @@ is_ESS <- function(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a,
       if(h==i)
         H <- as.matrix(is.samp[,i], ncol = 1)
     }
+    if(h==0)
+      eff_p = p
+    else
+      eff_p = 1
     
     snis <- colSums(H * norm_weights)
     
     varIbar <- (t(H - snis) %*% (norm_weights * (H - snis)))/N_min
     emp.var <- (t(H - snis) %*% (norm_weights^2 * (H - snis)))
     
-    ess.emp[j] <- N_min*((det(varIbar)/det(emp.var))^(1/p))
+    ess.emp[j] <- N_min*((det(varIbar)/det(emp.var))^(1/eff_p))
     ess.kong[j]  <- 1/sum(norm_weights^2)  ##comment to not calculate kong
     means.emp[j,] <- snis
     means.kong[j,] <- snis   ##comment to not calculate kong
     
     while (ess.emp[j] <= min_ess ||ess.kong[j] <= min_ess){
-      print(paste("Emp Iterations: ", iter.emp[j], "Emp ESS: ", ess.emp[j], "Kong Iterations: ", iter.kong[j], "Kong ESS: ",  ess.kong[j]))
+      #print(paste("Emp Iterations: ", iter.emp[j], "Emp ESS: ", ess.emp[j], "Kong Iterations: ", iter.kong[j], "Kong ESS: ",  ess.kong[j]))
       more.samp <- is(m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, step)
       is.more <- rbind(is.more, more.samp$samp)
       if (h==0)
@@ -133,7 +137,7 @@ is_ESS <- function(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a,
         iter.emp[j] <- iter.emp[j] + step
         varIbar <- (t(H - snis)%*%(norm_weights*(H-snis)))/iter.emp[j]
         emp.var <- (t(H - snis) %*% (norm_weights^2 * (H - snis)))
-        ess.emp[j] <- iter.emp[j]*((det(varIbar)/det(emp.var))^(1/p))
+        ess.emp[j] <- iter.emp[j]*((det(varIbar)/det(emp.var))^(1/eff_p))
         means.emp[j,] <- snis
       }
       
@@ -174,14 +178,41 @@ for (i in 1:(m+2))
   n_bar[i] <- sum(failures[1:i])
 
 
-reps <- 10
-samps <- 5
+########################################################
+########### Correlation plot for IS estimator ########
+########################################################
+
+
+sim <- is(m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, 1e5)
+H1 <- sim$samp
+H2 <- (H1[,2:5]^(-1/H1[,1]))*gamma(1 + (1/H1[,1]))
+colnames(H1) <- c("a", "l1", "l2", "l3", "l4")
+colnames(H2) <- c("mu1", "mu2", "mu3", "mu4")
+run_weights <- sim$weights
+norm_weights <- run_weights/sum(run_weights)
+snis1 <- colSums(H1*norm_weights)
+snis2 <- colSums(H2*norm_weights)
+emp.var1 <- (t(H1 - snis1) %*% (norm_weights^2 * (H1 - snis1)))
+emp.var2 <- (t(H2 - snis2) %*% (norm_weights^2 * (H2 - snis2)))
+pdf(file = "ISestimator_corrplot_H1.pdf", height=5, width =5)
+corrplot(cov2cor(emp.var1), method = "circle")
+dev.off()
+pdf(file = "ISestimator_corrplot_H2.pdf", height=5, width =5)
+corrplot(cov2cor(emp.var2), method = "circle")
+dev.off()
+
+###################################################################
+########## ESS vs Sample size for kong, uni, and multi ESS ########
+###################################################################
+
+reps <- 5e2
+samp_size <- seq(1e3, 1e5, 1e4)
+samps <- length(samp_size)
 kong <- matrix(0, nrow = samps, ncol = reps)
 multESS1 <- matrix(0, nrow = samps, ncol = reps)
 uniESS1 <- array(0, dim = c(p, reps, samps))
 multESS2 <- matrix(0, nrow = samps, ncol = reps)
 uniESS2 <- array(0, dim = c(4, reps, samps))
-samp_size <- seq(1e4, 5e4, 1e4)
 
 for (l in 1:reps)
 {
@@ -219,22 +250,24 @@ for (l in 1:reps)
     
   }
 }
+save(kong, uniESS1, uniESS2, multESS1, multESS2, file = "ESSvsSampSize_objects_kong_uni_mult.Rdata")
 
 
-left.kong <- apply(kong/samp_size, 1, quantile, probs = .25)
-right.kong <- apply(kong/samp_size, 1, quantile, probs = 0.75)
 
-left.H1 <- apply(multESS1/samp_size, 1, quantile, probs = .25)
-right.H1 <- apply(multESS1/samp_size, 1, quantile, probs = 0.75)
-
-left.H2 <- apply(multESS2/samp_size, 1, quantile, probs = .25)
-right.H2 <- apply(multESS2/samp_size, 1, quantile, probs = 0.75)
+############### Run from here after loading objects #################
+load(file = "ESSvsSampSize_objects_kong_uni_mult.Rdata")
+se.kong <- 2*apply(kong/samp_size, 2, sd)
+se.H1 <- 2*apply(multESS1/samp_size, 2, sd)/sqrt(10)
+se.H2 <- 2*apply(multESS2/samp_size, 2, sd)/sqrt(10)
+kong_means <- rowMeans(kong/samp_size)
+multESS1_means <- rowMeans(multESS1/samp_size)
+multESS2_means <- rowMeans(multESS2/samp_size)
 
 pdf(file = "ESSvsSampSizeH1.pdf", height = 5, width = 5)
-plot(samp_size, rowMeans(kong/samp_size), type = 'l', lwd=2, col = "red", xlab = "Sample Size", ylab = "ESS/N", ylim = range(c(kong/samp_size, multESS1/samp_size, apply(apply(uniESS1, 3, rowMeans), 1, '/', samp_size))))
-segments(x0 = samp_size, y0 = left.kong, y1 = right.kong, col = adjustcolor("red", alpha=.5))
-lines(samp_size, rowMeans(multESS1/samp_size), col = "blue", lwd=2)
-segments(x0 = samp_size, y0 = left.H1, y1 = right.H1, col = adjustcolor("blue", alpha = 0.5))
+plot(samp_size, kong_means, type = 'l', lwd=2, col = "red", xlab = "Sample Size", ylab = "ESS/N", ylim = range(c(kong/samp_size, multESS1/samp_size, apply(apply(uniESS1, 3, rowMeans), 1, '/', samp_size))))
+segments(x0 = samp_size, y0 = kong_means - se.kong, y1 = kong_means+se.kong, col = adjustcolor("red", alpha=.5))
+lines(samp_size, multESS1_means, col = "blue", lwd=2)
+segments(x0 = samp_size, y0 = multESS1_means-se.H1, y1 = multESS1_means+se.H1, col = adjustcolor("blue", alpha = 0.5))
 for(k in 1:5)
 {
   lines(samp_size, apply(uniESS1, 3, rowMeans)[k,]/samp_size, col = "green")
@@ -244,12 +277,12 @@ dev.off()
 
 
 pdf(file = "ESSvsSampSizeH1H2.pdf", height = 5, width = 5)
-plot(samp_size, rowMeans(kong/samp_size), type = 'l',lwd=2, col = "red",  xlab = "Sample Size", ylab = "ESS/N", ylim = range(c(kong/samp_size, multESS1/samp_size, multESS2/samp_size)))
-segments(x0 = samp_size, y0 = left.kong, y1 = right.kong, col = adjustcolor("red", alpha=.5))
-lines(samp_size, rowMeans(multESS1/samp_size), col = "blue", lwd=2)
-segments(x0 = samp_size, y0 = left.H1, y1 = right.H1, col = adjustcolor("blue", alpha = 0.5))
-lines(samp_size, rowMeans(multESS2/samp_size), col = "black", lwd=2)
-segments(x0 = samp_size, y0 = left.H2, y1 = right.H2, col = adjustcolor("black", alpha = 0.5))
+plot(samp_size, kong_means, type = 'l',lwd=2, col = "red",  xlab = "Sample Size", ylab = "ESS/N", ylim = range(c(multESS2_means-se.H2, multESS1_means+se.H1)))
+segments(x0 = samp_size, y0 = kong_means - se.kong, y1 = kong_means+se.kong, col = adjustcolor("red", alpha=.5))
+lines(samp_size, multESS1_means, col = "blue", lwd=2)
+segments(x0 = samp_size, y0 = multESS1_means-se.H1, y1 = multESS1_means+se.H1, col = adjustcolor("blue", alpha = 0.5))
+lines(samp_size, multESS2_means, col = "black", lwd=2)
+segments(x0 = samp_size, y0 = multESS2_means-se.H2, y1 = multESS2_means+se.H2, col = adjustcolor("black", alpha = 0.5))
 legend("bottomleft", cex = 0.8, legend = c("Kong", "multiESS_H1", "multiESS_H2"), col = c("red", "blue", "black"), lty=1, lwd=2)
 dev.off()
 
@@ -266,63 +299,16 @@ min_ess <- minESS(p, eps = 0.1)
 N_min <- round(min_ess/2)
 all_ESS1 <- list()
 all_ESS1[[1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, h=0, p=p)
-for (i in 1:1){
+for (i in 1:5){
   min_ess <- minESS(1, eps = 0.1)
   N_min <- round(min_ess/2)
-  all_ESS1[[i+1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, h=i, p=1)
+  all_ESS1[[i+1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, h=i, p)
 }
 save(all_ESS1, file = paste("ESS_eps1_p", p, ".Rdata", sep = ""))
 
-### Epsilon = 0.08
-min_ess <- minESS(p, eps = 0.08)
-N_min <- round(min_ess/2)
-all_ESS2 <- list()
-all_ESS2[[1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, h=0, p=p)
-for (i in 1:1){
-  min_ess <- minESS(1, eps = 0.08)
-  N_min <- round(min_ess/2)
-  all_ESS2[[i+1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, h=i, p=1)
-}
-save(all_ESS2, file = paste("ESS_eps2_p", p, ".Rdata", sep = ""))
-
-
-### Epsilon = 0.06
-min_ess <- minESS(p, eps = 0.06)
-N_min <- round(min_ess/2)
-all_ESS3 <- list()
-all_ESS3[[1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, h=0, p=p)
-for (i in 1:1){
-  min_ess <- minESS(1, eps = 0.06)
-  N_min <- round(min_ess/2)
-  all_ESS3[[i+1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, h=i, p=1)
-}
-save(all_ESS3, file = paste("ESS_eps3_p", p, ".Rdata", sep = ""))
-
-
-### Epsilon = 0.04
-min_ess <- minESS(p, eps = 0.04)
-N_min <- round(min_ess/2)
-all_ESS4 <- list()
-all_ESS4[[1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, h=0, p=p)
-for (i in 1:1){
-  min_ess <- minESS(1, eps = 0.04)
-  N_min <- round(min_ess/2)
-  all_ESS4[[i+1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, h=i, p=1)
-}
-save(all_ESS4, file = paste("ESS_eps4_p", p, ".Rdata", sep = ""))
-
-
-pdf(file = "diff_epsilon.pdf", width = 5, height = 5)
-plot(all_ESS1[[1]]$emp[,1], all_ESS1[[1]]$emp[,3], pch=19, col = "blue", xlim = range(all_ESS1[[1]]$emp[,1], all_ESS4[[1]]$emp[,1], all_ESS1[[2]]$emp[,1], all_ESS4[[2]]$emp[,1]), ylim = range(all_ESS1[[1]]$emp[,3], all_ESS4[[1]]$emp[,3], all_ESS1[[2]]$emp[,3], all_ESS4[[2]]$emp[,3]), xlab = "Iterations", ylab = "Alpha Estimates")
-points(all_ESS2[[1]]$emp[,1], all_ESS2[[1]]$emp[,3], pch=19, col = "green")
-points(all_ESS3[[1]]$emp[,1], all_ESS3[[1]]$emp[,3], pch=19, col = "orange")
-points(all_ESS4[[1]]$emp[,1], all_ESS4[[1]]$emp[,3], pch=19, col = "red")
-
-points(all_ESS1[[2]]$emp[,1], all_ESS1[[2]]$emp[,3], pch = 1, col = adjustcolor("blue", alpha.f = 0.3))
-points(all_ESS2[[2]]$emp[,1], all_ESS2[[2]]$emp[,3], pch = 1, col = adjustcolor("green", alpha.f = 0.3))
-points(all_ESS3[[2]]$emp[,1], all_ESS3[[2]]$emp[,3], pch = 1, col = adjustcolor("orange", alpha.f = 0.3))
-points(all_ESS4[[2]]$emp[,1], all_ESS4[[2]]$emp[,3], pch = 1, col = adjustcolor("red", alpha.f = 0.3))
-
-legend("topright", legend = c("epsilon = 0.1", "epsilon = 0.08", "epsilon = 0.06", "epsilon = 0.04"), col = c("blue", "green", "orange", "red"), pch = 19)
-dev.off()
-
+print(all_ESS1[[1]]$emp)
+print(all_ESS1[[2]]$emp)
+print(all_ESS1[[3]]$emp)
+print(all_ESS1[[4]]$emp)
+print(all_ESS1[[5]]$emp)
+print(all_ESS1[[6]]$emp)
