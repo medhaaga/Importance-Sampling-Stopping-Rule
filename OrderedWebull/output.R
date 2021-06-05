@@ -68,7 +68,11 @@ se.H1 <- 2*apply(multESS1/samp_size, 2, sd)/sqrt(reps)
 se.H2 <- 2*apply(multESS2/samp_size, 2, sd)/sqrt(reps)
 kong_means <- rowMeans(kong/samp_size)
 multESS1_means <- rowMeans(multESS1/samp_size)
+num.multESS1_means <- rowMeans(num.multESS1)
+denom.multESS1_means <- rowMeans(denom.multESS1)
 multESS2_means <- rowMeans(multESS2/samp_size)
+num.multESS2_means <- rowMeans(num.multESS2)
+denom.multESS2_means <- rowMeans(denom.multESS2)
 
 pdf(file = "ESSvsSampSizeH1.pdf", height = 5, width = 5)
 plot(samp_size, kong_means, type = 'l', lwd=2, col = "red", xlab = "Sample Size", ylab = "ESS/N", ylim = range(c(multESS2_means-se.H2, multESS1_means+se.H1, apply(apply(uniESS1, 3, rowMeans), 1, '/', samp_size))))
@@ -87,11 +91,26 @@ plot(samp_size, kong_means, type = 'l',lwd=2, col = "red",  xlab = "Sample Size"
 segments(x0 = samp_size, y0 = kong_means - se.kong, y1 = kong_means+se.kong, col = adjustcolor("red", alpha=.5))
 lines(samp_size, multESS1_means, col = "blue", lwd=2)
 segments(x0 = samp_size, y0 = multESS1_means-se.H1, y1 = multESS1_means+se.H1, col = adjustcolor("blue", alpha = 0.5))
+lines(samp_size, num.multESS1_means, col = "lightblue", lwd=1)
+lines(samp_size, denom.multESS1_means, col = "lightblue", lwd=1)
 lines(samp_size, multESS2_means, col = "black", lwd=2)
 segments(x0 = samp_size, y0 = multESS2_means-se.H2, y1 = multESS2_means+se.H2, col = adjustcolor("black", alpha = 0.5))
+lines(samp_size, num.multESS2_means, col = "grey", lwd=1)
+lines(samp_size, denom.multESS2_means, col = "grey", lwd=1)
 legend("bottomleft", cex = 0.6, legend = c("Kong", "multiESS_H1", "multiESS_H2"), col = c("red", "blue", "black"), lty=1, lwd=2)
 dev.off()
 
+
+pdf(file = "ESSvsSampSizeH1H2_num_denom.pdf", height = 5, width = 10)
+par(mfrow = c(1,2))
+plot(samp_size, num.multESS1_means, col = "blue", lwd=2, type='l', xlab = "Sample Size", ylab = "Num and Denom", ylim = range(num.multESS1_means, denom.multESS1_means))
+lines(samp_size, denom.multESS1_means, col = "lightblue", lwd=2, type='l')
+legend("topright", legend = c("Numerator", "Denominator"), col = c("blue", "lightblue"), lwd=2)
+
+plot(samp_size, num.multESS2_means, col = "blue", lwd=2, type='l', xlab = "Sample Size", ylab = "Num and Denom", ylim = range(num.multESS2_means, denom.multESS2_means))
+lines(samp_size, denom.multESS2_means, col = "lightblue", lwd=2, type='l')
+legend("topright", legend = c("Numerator", "Denominator"), col = c("blue", "lightblue"), lwd=2)
+dev.off()
 ###########################################################
 ############ Termination point vs epsilon ##############################
 ###########################################################

@@ -34,8 +34,12 @@ samp_size <- seq(1e3, 1e4, 1e3)
 samps <- length(samp_size)
 kong <- matrix(0, nrow = samps, ncol = reps)
 multESS1 <- matrix(0, nrow = samps, ncol = reps)
+num.multESS1 <- matrix(0, nrow = samps, ncol = reps)
+denom.multESS1 <- matrix(0, nrow = samps, ncol = reps)
 uniESS1 <- array(0, dim = c(p, reps, samps))
 multESS2 <- matrix(0, nrow = samps, ncol = reps)
+num.multESS2 <- matrix(0, nrow = samps, ncol = reps)
+denom.multESS2 <- matrix(0, nrow = samps, ncol = reps)
 uniESS2 <- array(0, dim = c(4, reps, samps))
 
 for (l in 1:reps)
@@ -64,14 +68,18 @@ for (l in 1:reps)
     emp.var2 <- (t(H2 - snis2) %*% (norm_weights^2 * (H2 - snis2)))
     
     multESS1[z,l] <- M*((det(varIbar1)/det(emp.var1))^(1/p_H1))
+    num.multESS1[z,l] <- det(varIbar1)^(1/p_H1)
+    denom.multESS1[z,l] <- det(emp.var1)^(1/p_H1)
     uniESS1[,l,z] <- M* diag(varIbar1)/ diag(emp.var1)
     
     multESS2[z,l] <- M*((det(varIbar2)/det(emp.var2))^(1/p_H2))
+    num.multESS2[z,l] <- det(varIbar2)^(1/p_H2)
+    denom.multESS2[z,l] <- det(emp.var2)^(1/p_H2)
     uniESS2[,l,z] <- M* diag(varIbar2)/ diag(emp.var2)
     
   }
 }
-save(kong, uniESS1, uniESS2, multESS1, multESS2, file = "ESSvsSampSize_objects_kong_uni_mult.Rdata")
+save(kong, uniESS1, uniESS2, multESS1, multESS2, num.multESS1, num.multESS2, denom.multESS1, denom.multESS2, file = "ESSvsSampSize_objects_kong_uni_mult.Rdata")
 
 ###########################################################
 ############ Termination point at epsilon = 0.05 ##########
