@@ -176,3 +176,80 @@ for (i in 1:3)
 }
 
 
+p <- 10
+sigma <- c(rep(2,ceiling(p/2)), rep(1, floor(p/2)))
+lambda <- .5
+Lambda <- diag(sigma)
+for (i in 1:(p-1)){
+  for (j in (i+1):p){
+    Lambda[i,j] <- lambda*sqrt(sigma[i]*sigma[j])
+    Lambda[j,i] <- lambda*sqrt(sigma[i]*sigma[j])
+  }
+}
+
+# proposal covariance
+tau <- c(rep(2,ceiling(p/2)), rep(((p+1)/p), floor(p/2)))
+rho <- .5
+Upsilon <- diag(tau)
+for (i in 1:(p-1)){
+  for (j in (i+1):p){
+    Upsilon[i,j] <- rho*sqrt(tau[i]*tau[j])
+    Upsilon[j,i] <- rho*sqrt(tau[i]*tau[j])
+  }
+}
+
+# Validity check
+foo <- 2*solve(Lambda) - solve(Upsilon)
+min(eigen(foo)$values)
+
+mu <- seq(1, p, 1)
+
+samp_size <- seq(1e3, 1e4, 1e3)
+
+truevar.uis <- var.uis(Upsilon, Lambda, mu)
+truevar.snis <- var.snis(Upsilon, Lambda, mu)
+trueESS.uis <- (det(Lambda)/det(truevar.uis))^(1/p)
+trueESS.snis <- (det(Lambda)/det(truevar.snis))^(1/p)
+trueESS.uis.num <- det(Lambda)^(1/p)
+trueESS.uis.denom <- det(truevar.uis)^(1/p)
+trueESS.snis.num <- det(Lambda)^(1/p)
+trueESS.snis.denom <- det(truevar.snis)^(1/p)
+reps <- 1e2
+samps <- length(samp_size)
+ESS.kong <- matrix(0, ncol = samps, nrow = reps)
+ESS.snis <- matrix(0, ncol = samps, nrow = reps)
+ESS.uis <- matrix(0, ncol = samps, nrow = reps)
+ESS.snis.num <- matrix(0, ncol = samps, nrow = reps)
+ESS.uis.num <- matrix(0, ncol = samps, nrow = reps)
+ESS.snis.denom <- matrix(0, ncol = samps, nrow = reps)
+ESS.uis.denom <- matrix(0, ncol = samps, nrow = reps)
+
+
+for (r in 1:reps)
+{
+  print(r)
+  for (i in 1:samps)
+  {
+    is <- rmvnorm(n=samp_size[i], mean = mu, sigma = Upsilon)
+    run_weights <- dmvnorm(is, mean = mu, sigma = Lambda)/dmvnorm(is, mean = mu, sigma = Upsilon)
+    norm_weights <- run_weights/sum(run_weights)
+    snis <- colSums(is * norm_weights)
+    uis <- colSums(is * run_weights)/samp_size[i]
+    
+    ESS.kong[r,i] <- 1/(samp_size[i]*sum(norm_weights^2))
+    varIbar.uis <- (t(is - uis) %*% (run_weights * (is - uis)))/(samp_size[i]^2)
+    varIbar.snis <- (t(is - snis) %*% (norm_weights * (is - snis)))/samp_size[i]
+    emp.var.uis <-  (t(run_weights*is - uis) %*% (run_weights*is - uis))/(samp_size[i]^2)
+    emp.var.snis <- (t(norm_weights*(is - snis)) %*% (norm_weights * (is - snis)))
+    ESS.uis.num[r,i] <- det(varIbar.uis)^(1/p)
+    ESS.uis.denom[r,i] <- det(emp.var.uis)^(1/p)
+    ESS.uis[r,i] <- ((det(varIbar.uis)/det(emp.var.uis))^(1/p))
+    ESS.snis.num[r,i] <- det(varIbar.snis)^(1/p)
+    ESS.snis.denom[r,i] < det(emp.var.snis)^(1/p)
+    ESS.snis[r,i] <- ((det(varIbar.snis)/det(emp.var.snis))^(1/p))
+  }
+}
+
+save(ESS.kong, trueESS.uis, trueESS.snis, ESS.uis.num, ESS.uis.denom, ESS.uis, ESS.snis.num, ESS.snis.denom, ESS.snis, file = "uisVSsnis.Rdata")
+
+

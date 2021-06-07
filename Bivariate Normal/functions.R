@@ -3,9 +3,15 @@ rm(list = ls())
 library(mvtnorm)
 library(mcmcse)
 
-var.is <- function(Sigma, Lambda){
+var.snis <- function(Sigma, Lambda, mu=0){
   foo <- 2*solve(Lambda) - solve(Sigma)
-  return((sqrt(det(Sigma))/(det(Lambda) * sqrt(det(foo)))) * solve(foo))
+  return(((sqrt(det(Sigma))/(det(Lambda)) * sqrt(det(foo)))) * (solve(foo) - outer(mu, mu)))
+}
+
+var.uis <- function(Sigma, Lambda, mu=0)
+{
+  foo <- 2*solve(Lambda) - solve(Sigma)
+  return(((sqrt(det(Sigma))/(det(Lambda)) * sqrt(det(foo))) * solve(foo))  - outer(mu, mu))
 }
 
 obj.det <- function(par, Lambda){
@@ -53,7 +59,7 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, fun, h=0, p){
     
     snis <- colSums(H * norm_weights)
     
-    true.var <- var.is(Sigma, Lambda)  ## N*true IS variance
+    true.var <- var.snis(Sigma, Lambda)  ## N*true IS variance
     var.f <- Lambda  
     varIbar <- (t(H - snis) %*% (norm_weights * (H - snis)))/N_min
     emp.var <- (t(H - snis) %*% (norm_weights^2 * (H - snis)))
