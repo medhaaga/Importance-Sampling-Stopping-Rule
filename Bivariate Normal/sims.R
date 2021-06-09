@@ -237,10 +237,13 @@ for (r in 1:reps)
     uis <- colSums(is * run_weights)/samp_size[i]
     
     ESS.kong[r,i] <- 1/(samp_size[i]*sum(norm_weights^2))
-    varIbar.uis <- (t(is - uis) %*% (run_weights * (is - uis)))/(samp_size[i]^2)
-    varIbar.snis <- (t(is - snis) %*% (norm_weights * (is - snis)))/samp_size[i]
-    emp.var.uis <-  (t(run_weights*is - uis) %*% (run_weights*is - uis))/(samp_size[i]^2)
-    emp.var.snis <- (t(norm_weights*(is - snis)) %*% (norm_weights * (is - snis)))
+    foo1 <- matrix(uis, nrow = samp_size[i], ncol = p, byrow = TRUE)
+    foo2 <- matrix(snis, nrow = samp_size[i], ncol = p, byrow = TRUE)
+    
+    varIbar.uis <- (t(is - foo1) %*% (run_weights * (is - foo1)))/(samp_size[i]^2)
+    varIbar.snis <- (t(is - foo2) %*% (norm_weights * (is - foo2)))/samp_size[i]
+    emp.var.uis <-  (t(run_weights*is - foo1) %*% (run_weights*is - foo1))/(samp_size[i]^2)
+    emp.var.snis <- (t(norm_weights*(is - foo2)) %*% (norm_weights * (is - foo2)))
     ESS.uis.num[r,i] <- det(varIbar.uis)^(1/p)
     ESS.uis.denom[r,i] <- det(emp.var.uis)^(1/p)
     ESS.uis[r,i] <- ((det(varIbar.uis)/det(emp.var.uis))^(1/p))

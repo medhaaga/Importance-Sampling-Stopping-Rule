@@ -121,3 +121,31 @@ for (j in 1:3)
   dev.off()
 }
 
+
+
+
+load(file = "uisVSsnis.Rdata")
+samp_size <- seq(1e3, 1e4, 1e3)
+reps <- 1e2
+samps <- length(samp_size)
+kong.avg <- colMeans(ESS.kong)
+uis.avg <- colMeans(ESS.uis)
+snis.avg <- colMeans(ESS.snis)
+uis.avg.num <- colMeans(ESS.uis.num)
+snis.avg.num <- colMeans(ESS.snis.num)
+uis.avg.denom <- colMeans(ESS.uis.denom)
+snis.avg.denom <- colMeans(ESS.snis.denom)
+uis.se <- apply(ESS.uis, MARGIN=2, FUN=sd)/sqrt(reps)
+snis.se <- apply(ESS.snis, MARGIN=2, FUN=sd)/sqrt(reps)
+kong.se <- apply(ESS.kong, MARGIN=2, FUN=sd)/sqrt(reps)
+
+pdf(file = "uisVSsnis.pdf", width = 5, height = 5)
+plot(samp_size, uis.avg, type = 'l', lwd=2, col = "blue", ylim = range(kong.avg-kong.se, uis.avg, snis.avg+snis.se))
+lines(samp_size, snis.avg, col = "green", lwd=2)
+lines(samp_size, kong.avg, lwd=2)
+segments(x0 = samp_size, y0=uis.avg-uis.se, y1 = uis.avg+uis.se, col = "blue")
+segments(x0 = samp_size, y0=snis.avg-snis.se, y1 = snis.avg+snis.se, col = "green")
+segments(x0 = samp_size, y0=kong.avg-kong.se, y1 = kong.avg+kong.se, col = "black")
+abline(h = trueESS.uis, lty=2, col = "blue")
+abline(h = trueESS.snis, lty=2, col = "green")
+dev.off()
