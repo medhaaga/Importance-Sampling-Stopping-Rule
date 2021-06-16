@@ -89,8 +89,9 @@ for (i in 1:3)
 ##### Termination for diff epsilon in settings-1,2,3 #####
 ##########################################################
 
+start.time <- Sys.time()
 step <- 5e2
-loop <- 20
+loop <- 1e2
 dims <- c(2,10)
 epsilons <- c(.1, .06, .04, .02)
 lambdas <- c(0.1, 0.8, 0.5)
@@ -132,7 +133,7 @@ for (a in 1:3)
     
     ### Epsilon = 0.1
     min_ess <- minESS(p, eps = epsilons[1])
-    N_min <- round(min_ess/2)
+    N_min <- round(min_ess)
     all_ESS1 <- list()
     all_ESS1[[1]] <- is_ESS(min_ess, step, loop, N_min, Upsilon, Lambda, mu, fun = fun, h=0, p=p)
     # for (i in 1:p){
@@ -142,7 +143,7 @@ for (a in 1:3)
     # 
     ### Epsilon = 0.06
     min_ess <- minESS(p, eps = epsilons[2])
-    N_min <- round(min_ess/2)
+    N_min <- round(min_ess)
     all_ESS2 <- list()
     all_ESS2[[1]] <- is_ESS(min_ess, step, loop, N_min, Upsilon, Lambda, mu, fun = fun, h=0, p=p)
     # for (i in 1:p){
@@ -152,7 +153,7 @@ for (a in 1:3)
     # 
     ### Epsilon = 0.04
     min_ess <- minESS(p, eps = epsilons[3])
-    N_min <- round(min_ess/2)
+    N_min <- round(min_ess)
     all_ESS3 <- list()
     all_ESS3[[1]] <- is_ESS(min_ess, step, loop, N_min, Upsilon, Lambda, mu, fun = fun, h=0, p=p)
     # for (i in 1:p){
@@ -162,7 +163,7 @@ for (a in 1:3)
     # 
     ### Epsilon = 0.02
     min_ess <- minESS(p, eps = epsilons[4])
-    N_min <- round(min_ess/2)
+    N_min <- round(min_ess)
     all_ESS4 <- list()
     all_ESS4[[1]] <- is_ESS(min_ESS, step, loop, N_min, Upsilon, Lambda, mu, fun, h=0, p)
     # for (i in 1:p){
@@ -178,8 +179,8 @@ for (a in 1:3)
     
   }
 }
- 
-
+end.time <- Sys.time()
+print(end.time - start.time)
 # p <- 1
 # sigma <- c(rep(2,ceiling(p/2)), rep(1, floor(p/2)))
 # lambda <- .5
