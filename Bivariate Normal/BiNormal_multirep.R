@@ -31,7 +31,7 @@ for(i in 1:3)
   lines(ellipse(Upsilon), col = "blue", lwd=2, lty=2)
   lines(ellipse(true.uis.var), col = "red", lwd=2, lty=1)
   lines(ellipse(true.snis.var), col = "orange", lwd=2, lty=1)
-  legend("topleft", legend = c("Target", "proposal", "UIS variance", "SNIS variance"), bty = 'n', cex=.8, col = c("black", "blue", "red", "orange"), lty=1, lwd=2)
+  legend("topleft", legend = c("Target variance", "Proposal variance", "UIS variance", "SNIS variance"), bty = 'n', cex=.8, col = c("black", "blue", "red", "orange"), lty=1, lwd=2)
   dev.off()
 }
 
@@ -69,12 +69,12 @@ for (t in 1:3)
 ##### Termination for diff epsilon in settings-1,2,3 #####
 ##########################################################
 
-loop <- 20
+loop <- 100
 dims <- c(2,10)
 
 for (j in 1:2)
 {
-  for (a in 1:1)
+  for (a in 1:3)
   {
     p <- dims[j]
     mu <- rep(2, p)
@@ -89,9 +89,9 @@ for (j in 1:2)
     SE3_snis <- rowSums(abs(all_ESS3[[1]]$emp_snis[,-c(1,2)]-mu))#apply(as.matrix(all_ESS3[[1]]$emp_snis[,-c(1,2)]-mu, row = loop), 1, norm, '1')
     SE4_snis <- rowSums(abs(all_ESS4[[1]]$emp_snis[,-c(1,2)]-mu))#apply(as.matrix(all_ESS4[[1]]$emp_snis[,-c(1,2)]-mu, row = loop), 1, norm, '1')
     
-    pdf(file = paste("multinorm-sqeVSiter_p", p, "_setting", a, ".pdf", sep = ""), width = 5, height = 5)
+    pdf(file = paste("multinorm-l1VSiter_p", p, "_setting", a, ".pdf", sep = ""), width = 5, height = 5)
     
-    plot(log(all_ESS1[[1]]$emp_uis[,1]), SE1_uis, pch=1, col = "blue", main = paste("p = ", p), xlim = log(range(truth.snis, truth.uis, all_ESS1[[1]]$emp_uis[,1],  all_ESS1[[1]]$emp_snis[,1], all_ESS4[[1]]$emp_uis[,1],  all_ESS4[[1]]$emp_snis[,1])), ylim = range(SE1_uis, SE2_uis, SE3_uis, SE4_uis, SE1_snis, SE2_snis, SE3_snis, SE4_snis), xlab = "Iterations", ylab = "Squared Error")
+    plot(log(all_ESS1[[1]]$emp_uis[,1]), SE1_uis, pch=1, col = "blue", main = paste("p = ", p), xlim = log(range(truth.snis, truth.uis, all_ESS1[[1]]$emp_uis[,1],  all_ESS1[[1]]$emp_snis[,1], all_ESS4[[1]]$emp_uis[,1],  all_ESS4[[1]]$emp_snis[,1])), ylim = range(SE1_uis, SE2_uis, SE3_uis, SE4_uis, SE1_snis, SE2_snis, SE3_snis, SE4_snis), xlab = "Log of Iterations", ylab = "L1 norm of error")
     points(log(all_ESS2[[1]]$emp_uis[,1]), SE2_uis, pch=1, col = "green")
     points(log(all_ESS3[[1]]$emp_uis[,1]), SE3_uis, pch=1, col = "orange")
     points(log(all_ESS4[[1]]$emp_uis[,1]), SE4_uis, pch=1, col = "pink")
@@ -101,17 +101,18 @@ for (j in 1:2)
     points(log(all_ESS3[[1]]$emp_snis[,1]), SE3_snis, pch=19, col = "orange")
     points(log(all_ESS4[[1]]$emp_snis[,1]), SE4_snis, pch=19, col = "pink")
     
-    abline(v = truth.uis[1], lty=2, col = "blue")
-    abline(v = truth.uis[2], lty=2, col = "green")
-    abline(v = truth.uis[3], lty=2, col = "orange")
-    abline(v = truth.uis[4], lty=2, col = "pink")
+    abline(v = log(truth.uis[1]), lty=2, col = "blue")
+    abline(v = log(truth.uis[2]), lty=2, col = "green")
+    abline(v = log(truth.uis[3]), lty=2, col = "orange")
+    abline(v = log(truth.uis[4]), lty=2, col = "pink")
     
-    abline(v = truth.snis[1], lty=3, col = "blue")
-    abline(v = truth.snis[2], lty=3, col = "green")
-    abline(v = truth.snis[3], lty=3, col = "orange")
-    abline(v = truth.snis[4], lty=3, col = "pink")
+    abline(v = log(truth.snis[1]), lty=3, col = "blue")
+    abline(v = log(truth.snis[2]), lty=3, col = "green")
+    abline(v = log(truth.snis[3]), lty=3, col = "orange")
+    abline(v = log(truth.snis[4]), lty=3, col = "pink")
     
-    legend("topright", border = NA, legend = c(expression(paste(epsilon, "=0.1")), expression(paste(epsilon, "=0.06")), expression(paste(epsilon, "=0.04")), expression(paste(epsilon, "=0.02"))), col = c("blue", "green", "orange", "pink"), pch = 19, cex = 1.2)
+    legend("topright", border = NA, bty = 'n', legend = c(expression(paste(epsilon, "=0.10")), expression(paste(epsilon, "=0.06")), expression(paste(epsilon, "=0.04")), expression(paste(epsilon, "=0.02"))), col = c("blue", "green", "orange", "pink"), pch = 19, cex = 1.2)
+    legend("topright", inset = c(.25, 0), bty = 'n', legend = c("UIS", "SNIS"), pch = c(1,19))
     dev.off()
   }
   
