@@ -32,18 +32,14 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, mu, fun, h=0, p){
   if (h==0){
     means.emp.uis <- matrix(0, nrow = loop, ncol = p)
     means.emp.snis <- matrix(0, nrow = loop, ncol = p)
-    #means.kong <- matrix(0, nrow = loop, ncol = p)
-    #means.true <- matrix(0, nrow = loop, ncol = p)
+    
   } else{
     means.emp.uis <- matrix(0, nrow = loop, ncol = 1)
     means.emp.snis <- matrix(0, nrow = loop, ncol = 1)
-    #means.kong <- matrix(0, nrow = loop, ncol = 1)
-    #means.true <- matrix(0, nrow = loop, ncol = 1)
+    
   }
   ess.emp.uis <- rep(0, loop)
   ess.emp.snis <- rep(0, loop)
-  #ess.kong <- rep(0, loop)
-  #ess.true <- rep(0, loop)
   
   for(t in 1:loop){
     
@@ -71,9 +67,6 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, mu, fun, h=0, p){
       foo2 <- matrix(snis, nrow = iter.emp.snis[t], ncol = 1, byrow = TRUE)
     }
     
-    #true.var.uis <- var.uis(Sigma, Lambda)
-    #true.var.snis <- var.snis(Sigma, Lambda)  ## N*true IS variance
-    #var.f <- Lambda  
     varIbar.uis <- (t(H - foo1) %*% (weights * (H - foo1)))/(N_min^2)
     varIbar.snis <- (t(H - foo2) %*% (norm_weights * (H - foo2)))/N_min
     
@@ -82,11 +75,8 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, mu, fun, h=0, p){
     ess.emp.uis[t] <- iter.emp.uis[t]*((det(varIbar.uis)/det(emp.var.uis))^(1/p))
     ess.emp.snis[t] <- iter.emp.snis[t]*((det(varIbar.snis)/det(emp.var.snis))^(1/p))
     
-    #ess.kong[t]  <- 1/sum(norm_weights^2)  ##comment to not calculate kong
-    #ess.true[t] <- N_min*((det(var.f)/det(true.var))^(1/p))
     means.emp.uis[t,] <- uis
     means.emp.snis[t,] <- snis
-    #means.kong[t,] <- snis   ##comment to not calculate kong
     
     while (ess.emp.uis[t] <= min_ess || ess.emp.snis[t] <= min_ess){
       
@@ -130,17 +120,6 @@ is_ESS <- function(min_ESS, step, loop, N_min, Sigma, Lambda, mu, fun, h=0, p){
         means.emp.snis[t,] <- snis
       }
       
-      # if (ess.kong[t] <= min_ess){
-      #   iter.kong[t] <- iter.kong[t] + step
-      #   ess.kong[t] <- 1/sum(norm_weights^2)
-      #   means.kong[t,] <- snis
-      # }
-      # 
-      # if (ess.true[t] <= min_ess){
-      #   iter.true[t] <- iter.true[t] + step
-      #   ess.true[t] <- iter.true[t]*(det(var.f)/det(true.var))^(1/p)
-      #   means.true[t,] <- snis
-      # }
       
     }
   }

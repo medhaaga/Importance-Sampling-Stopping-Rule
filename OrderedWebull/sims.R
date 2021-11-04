@@ -79,7 +79,7 @@ for (l in 1:reps)
     
   }
 }
-save(kong, uniESS1, uniESS2, multESS1, multESS2, num.multESS1, num.multESS2, denom.multESS1, denom.multESS2, file = "ESSvsSampSize_objects_kong_uni_mult.Rdata")
+save(kong, uniESS1, uniESS2, multESS1, multESS2, num.multESS1, num.multESS2, denom.multESS1, denom.multESS2, file = "Out/ESSvsSampSize_objects_kong_uni_mult.Rdata")
 
 ###########################################################
 ############ Termination point at epsilon = 0.05 ##########
@@ -107,6 +107,6 @@ for (i in 1:p_H2){
   N_min <- round(min_ess/2)
   all_ESS_H2[[i+1]] <- is_ESS(min_ESS, step, loop, N_min, m, n, r, shape.a, shape.b, ord.a, ord.b, ord.A, failures, stress, t, n_bar, fun = fun2, h=i, p=p_H2)
 }
-save(all_ESS_H1, all_ESS_H2, file = "ESS_eps_H1_H2.Rdata")
+save(all_ESS_H1, all_ESS_H2, file = "Out/ESS_eps_H1_H2.Rdata")
 
 
