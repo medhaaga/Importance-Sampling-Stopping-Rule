@@ -1,6 +1,6 @@
 # Importance-Sampling-Stopping-Rule
 
-This repository contains all examples and simulations in the [Agarwal, Vats, and Elvira (2021)](https://arxiv.org/abs/2108.13289) paper. The examples include:
+This repository contains reproducible examples and simulations in the "A principled stopping rule for importance sampling" by [Agarwal, Vats, and Elvira (2021)](https://arxiv.org/abs/2108.13289) paper. The examples include:
 
 #### Multivariate Normal Model
 #### Weibull Multi-Step Step-Stress Model
