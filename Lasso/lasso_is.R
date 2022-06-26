@@ -2,7 +2,6 @@
 library(INLA)
 library(ISLR)
 library(glmnet)
-library(INLA)
 library(smoothmest)
 library(mvtnorm)
 
@@ -103,8 +102,8 @@ rq.beta <- function(theta) {
 ### IS
 set.seed(1)
 start.time <- Sys.time()
-is_mod = inlaIS(data = df, init = list(mu = rep(0,n.beta), cov = 4*stdev.samp),
-                prior.beta, dq.beta, rq.beta, fit.inla, N_0 = 5000, N = 10000,ncores = 10)
+is_mod = inlaIS(data = df, init = init,
+                prior.beta, dq.beta, rq.beta, fit.inla, N_0 = 5000, N = 10000,ncores = 5)
 end.time <- Sys.time()
 print(end.time - start.time)
 save(is_mod, file = "Out/lasso_is.Rdata")
