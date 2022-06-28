@@ -15,7 +15,7 @@ par.is <- function(x, data, theta, t, prior, d.prop, r.prop, fit.inla){
 }
 
 # main IS with INLA algorithm
-inlaIS <- function(data, init, prior, d.prop, r.prop, fit.inla, N_0 = NA, N = 4000, kde = FALSE, ncores=1){
+inlaIS <- function(data, init, prior, d.prop, r.prop, fit.inla, N_0 = NA, N = 4000, kde = FALSE, ncores=1, N0iter = 10){
   if (ncores>parallel::detectCores()){
     ncores = parallel::detectCores()
   }
@@ -26,16 +26,16 @@ inlaIS <- function(data, init, prior, d.prop, r.prop, fit.inla, N_0 = NA, N = 40
   res = list()
   margs = NA
   n_eta = length(r.prop(theta[[1]]))
-  if (anyNA(N_0)){
-    pb <- txtProgressBar(min = 0, max = N, style = 3)
-    theta[[2]] = init
-    N_0 = 0
-  }else{
+  for(k in 1:N0iter)
+  {
+    print(k)
+    print(theta[[k]])
+
     pb <- txtProgressBar(min = 0, max = N+N_0, style = 3)
     weight = numeric(N_0)
     eta = matrix(NA, ncol = n_eta, nrow = N_0)
     is.list = parallel::mclapply(seq(N_0), function(x){
-      par.is(x, data, theta, 1, prior, d.prop,r.prop, fit.inla)
+      par.is(x, data, theta, t = k, prior, d.prop,r.prop, fit.inla)
     }, mc.set.seed = TRUE, mc.cores = ncores)
     for (i in seq(length(is.list))){
       setTxtProgressBar(pb, i)
@@ -43,7 +43,7 @@ inlaIS <- function(data, init, prior, d.prop, r.prop, fit.inla, N_0 = NA, N = 40
       weight[i] = is.list[[i]]$weight
       margs = store.post(is.list[[i]]$dists,margs,i,N_0)
     }
-    theta[[2]] = calc.theta(list(weight,eta,margs),N_0)
+    theta[[k+1]] = calc.theta(list(weight,eta,margs),N_0)
   }
   margs = NA
   
@@ -51,7 +51,7 @@ inlaIS <- function(data, init, prior, d.prop, r.prop, fit.inla, N_0 = NA, N = 40
   weight = numeric(N)
   mlik = numeric(N)
   is.list = parallel::mclapply(seq(N), function(x){
-    par.is(x, data, theta, 2, prior, d.prop,r.prop, fit.inla)
+    par.is(x, data, theta, (N0iter+1), prior, d.prop,r.prop, fit.inla)
   }, mc.set.seed = TRUE, mc.cores = ncores)
   for (i in seq(length(is.list))){
     setTxtProgressBar(pb, i+N_0)

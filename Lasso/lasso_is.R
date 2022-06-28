@@ -103,7 +103,7 @@ rq.beta <- function(theta) {
 set.seed(1)
 start.time <- Sys.time()
 is_mod = inlaIS(data = df, init = init,
-                prior.beta, dq.beta, rq.beta, fit.inla, N_0 = 5000, N = 10000,ncores = 5)
+                prior.beta, dq.beta, rq.beta, fit.inla, N_0 = 1000, N = 10000,ncores = 5, N0iter = 10)
 end.time <- Sys.time()
 print(end.time - start.time)
 save(is_mod, file = "Out/lasso_is.Rdata")
