@@ -1,8 +1,7 @@
 library(ggplot2)
 library(scales)
-library(ggpubr)
 
-load("Out/lasso_is.Rdata")
+load("Out/lasso_is_init.Rdata")
 
 is_samp <- is_mod$eta
 is_weights <- is_mod$weight
