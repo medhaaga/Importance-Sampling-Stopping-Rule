@@ -21,7 +21,7 @@ Hitters <- na.omit(Hitters)
 
 #Create variables for lasso
 x <- model.matrix(Salary ~ ., Hitters)[, -1]
-x <- x[, 1:5] #Just for testing
+# x <- x[, 1:10] #Just for testing
 x <- scale(x)
 y <- Hitters$Salary
 y <- scale(y)
@@ -103,7 +103,7 @@ rq.beta <- function(theta) {
 set.seed(1)
 start.time <- Sys.time()
 is_mod = inlaIS(data = df, init = init,
-                prior.beta, dq.beta, rq.beta, fit.inla, N_0 = 2000, N = 10000,ncores = 5, N0iter = 10)
+                prior.beta, dq.beta, rq.beta, fit.inla, N_0 = 1e4, N = 1e4,ncores = 60, N0iter = 10)
 end.time <- Sys.time()
 print(end.time - start.time)
 save(is_mod, file = "Out/lasso_is_init.Rdata")
