@@ -22,7 +22,7 @@ Hitters <- na.omit(Hitters)
 
 #Create variables for lasso
 x <- model.matrix(Salary ~ ., Hitters)[, -1]
-x <- x[, 1:5] #Just for testing
+# x <- x[, 1:5] #Just for testing
 x <- scale(x)
 y <- Hitters$Salary
 y <- scale(y)
@@ -100,7 +100,7 @@ rq.beta <- function(theta) {
 
 # initial parameters of the proposal distribution
 init <- is_mod$theta[[length(is_mod$theta)]]
-
+init[[2]] <- 2*init[[2]]
 ### IS replication study
 set.seed(1)
 reps <- 10
@@ -109,7 +109,7 @@ for(r in 1:reps)
 {
   start.time <- Sys.time()
   all_out[[r]] = inlaIS(data = df, init = init,
-                prior.beta, dq.beta, rq.beta, fit.inla, N = 10000,ncores = 5)
+                prior.beta, dq.beta, rq.beta, fit.inla, N = 1e4,ncores = 60)
   end.time <- Sys.time()
   print(end.time - start.time) 
 }
