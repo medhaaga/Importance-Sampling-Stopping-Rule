@@ -1,7 +1,7 @@
 
 R version 4.2.1 (2022-06-23) -- "Funny-Looking Kid"
 Copyright (C) 2022 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin17.0 (64-bit)
+Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -23,7 +23,7 @@ Loading required package: Matrix
 Loading required package: foreach
 Loading required package: parallel
 Loading required package: sp
-This is INLA_22.05.07 built 2022-05-07 09:58:26 UTC.
+This is INLA_22.05.07 built 2022-05-07 09:52:03 UTC.
  - See www.r-inla.org/contact-us for how to get help.
  - To enable PARDISO sparse library; see inla.pardiso()
 > library(ISLR)
@@ -50,7 +50,7 @@ Loading required package: MASS
 > 
 > #Create variables for lasso
 > x <- model.matrix(Salary ~ ., Hitters)[, -1]
-> x <- x[, 1:5] #Just for testing
+> # x <- x[, 1:5] #Just for testing
 > x <- scale(x)
 > y <- Hitters$Salary
 > y <- scale(y)
@@ -128,7 +128,7 @@ Loading required package: MASS
 > 
 > # initial parameters of the proposal distribution
 > init <- is_mod$theta[[length(is_mod$theta)]]
-> 
+> init[[2]] <- 2*init[[2]]
 > ### IS replication study
 > set.seed(1)
 > reps <- 10
@@ -137,24 +137,24 @@ Loading required package: MASS
 + {
 +   start.time <- Sys.time()
 +   all_out[[r]] = inlaIS(data = df, init = init,
-+                 prior.beta, dq.beta, rq.beta, fit.inla, N = 10000,ncores = 5)
++                 prior.beta, dq.beta, rq.beta, fit.inla, N = 1e4,ncores = 60)
 +   end.time <- Sys.time()
 +   print(end.time - start.time) 
 + }
-Time difference of 2.700009 hours
-Time difference of 2.794814 hours
-Time difference of 2.557588 hours
-Time difference of 2.557188 hours
-Time difference of 2.555192 hours
-Time difference of 2.553138 hours
-Time difference of 2.552429 hours
-Time difference of 2.553985 hours
-Time difference of 2.557487 hours
-Time difference of 2.56299 hours
+Time difference of 22.29615 mins
+Time difference of 22.37972 mins
+Time difference of 22.3609 mins
+Time difference of 22.37539 mins
+Time difference of 22.38693 mins
+Time difference of 22.31181 mins
+Time difference of 22.35432 mins
+Time difference of 22.32954 mins
+Time difference of 22.36488 mins
+Time difference of 22.31082 mins
 > 
 > 
 > save(all_out, file = "Out/lasso_reps.Rdata")
 > 
 > proc.time()
      user    system   elapsed 
-145009.17 189781.31  93403.16 
+828839.23  23250.32  13410.36 
