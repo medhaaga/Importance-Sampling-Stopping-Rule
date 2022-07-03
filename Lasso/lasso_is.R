@@ -85,7 +85,7 @@ prior.beta <- function(x, mu = 0, lambda = 0.073, log = TRUE) {
 }
 
 # initial parameters of the proposal distribution
-init = list(mu = rep(0,n.beta), cov = 4*stdev.samp)
+init = list(mu = as.numeric(lasso.coef)[-1], cov = 4*stdev.samp)
 # proposal distribution
 ## evaluate
 dq.beta <- function(y, theta = init, log =TRUE) {
@@ -103,7 +103,7 @@ rq.beta <- function(theta) {
 set.seed(1)
 start.time <- Sys.time()
 is_mod = inlaIS(data = df, init = init,
-                prior.beta, dq.beta, rq.beta, fit.inla, N_0 = 1e4, N = 1e4,ncores = 60, N0iter = 10)
+                prior.beta, dq.beta, rq.beta, fit.inla, N_0 = 1e4, N = 1e4,ncores = 60, N0iter = 8)
 end.time <- Sys.time()
 print(end.time - start.time)
 save(is_mod, file = "Out/lasso_is_init.Rdata")
