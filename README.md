@@ -4,5 +4,6 @@ This repository contains reproducible examples and simulations in the "A princip
 
 #### Multivariate Normal Model
 #### Weibull Multi-Step Step-Stress Model
+#### Bayesian Lasso with Importance Sampling and INLA
 
 Each example folder contains the code for simulating R objects and producing plots. The objects and plots are saved in the "./Out" folder.
