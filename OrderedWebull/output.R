@@ -15,16 +15,16 @@ p <- m+2
 
 ####### hyperparams for priors ###########
 val <- .8
-shape.a <- val 
-shape.b <- val 
-ord.a <- val 
-ord.b <- val 
+shape.a <- val
+shape.b <- val
+ord.a <- val
+ord.b <- val
 ord.A <- rep(1, m+1)
 p_H1 <- p
 p_H2 <- p-1
 
 n_bar <- rep(0, m+2)
-for (i in 1:(m+2)) 
+for (i in 1:(m+2))
   n_bar[i] <- sum(failures[1:i])
 
 
@@ -75,19 +75,19 @@ num.multESS2_means <- rowMeans(num.multESS2)
 denom.multESS2_means <- rowMeans(denom.multESS2)
 
 pdf(file = "Out/ESSvsSampSizeH1.pdf", height = 5, width = 5)
-plot(samp_size, kong_means, type = 'l', lwd=2, col = "red", xlab = "Sample Size", ylab = "ESS/N", ylim = range(c(multESS2_means-se.H2, multESS1_means+se.H1, apply(apply(uniESS1, 3, rowMeans), 1, '/', samp_size))))
+plot(samp_size, kong_means, type = 'l', lwd=2, col = "red", xlab = "Sample Size", ylab = "ESS/N", ylim = range(c(.5,multESS2_means-se.H2, multESS1_means+se.H1, apply(apply(uniESS1, 3, rowMeans), 1, '/', samp_size))))
 lines(samp_size, multESS1_means, col = "blue", lwd=2)
 for(k in 1:5)
 {
   lines(samp_size, apply(uniESS1, 3, rowMeans)[k,]/samp_size, col = "green")
 }
-legend("bottomleft", legend = c("Kong", "multiESS", "uniESS"), cex = 0.6, col = c("red", "blue", "green"), lty=1)
+legend("bottomleft", legend = c("Kong", "multiESS", "uniESS"), cex = 0.8, col = c("red", "blue", "green"), lty=1)
 dev.off()
 
 
 pdf(file = "Out/ESSvsSampSizeH1H2.pdf", height = 5, width = 5)
 par(xpd=TRUE)
-plot(samp_size, kong_means, type = 'l',lwd=2, col = "red",  xlab = "Sample Size", ylab = "ESS/N", ylim = range(c(multESS2_means-se.H2, multESS1_means+se.H1, apply(apply(uniESS1, 3, rowMeans), 1, '/', samp_size))))
+plot(samp_size, kong_means, type = 'l',lwd=2, col = "red",  xlab = "Sample Size", ylab = "ESS/N", ylim = range(c(.5, multESS2_means-se.H2, multESS1_means+se.H1, apply(apply(uniESS1, 3, rowMeans), 1, '/', samp_size))))
 segments(x0 = samp_size, y0 = kong_means - se.kong, y1 = kong_means+se.kong, col = adjustcolor("red", alpha=.5))
 lines(samp_size, multESS1_means, col = "blue", lwd=2)
 segments(x0 = samp_size, y0 = multESS1_means-se.H1, y1 = multESS1_means+se.H1, col = adjustcolor("blue", alpha = 0.5))
@@ -97,7 +97,7 @@ lines(samp_size, multESS2_means, col = "black", lwd=2)
 segments(x0 = samp_size, y0 = multESS2_means-se.H2, y1 = multESS2_means+se.H2, col = adjustcolor("black", alpha = 0.5))
 lines(samp_size, num.multESS2_means, col = "grey", lwd=1)
 lines(samp_size, denom.multESS2_means, col = "grey", lwd=1)
-legend("bottomleft", cex = 0.6, legend = c("Kong", "multiESS_H1", "multiESS_H2"), col = c("red", "blue", "black"), lty=1, lwd=2)
+legend("bottomleft", cex = 0.8, legend = c("Kong", "multiESS_H1", "multiESS_H2"), col = c("red", "blue", "black"), lty=1, lwd=2)
 dev.off()
 
 
