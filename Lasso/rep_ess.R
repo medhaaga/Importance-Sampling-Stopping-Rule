@@ -55,8 +55,9 @@ se_mESS <- 2*apply(mESS, 1, sd)/sqrt(reps)
 
 ### Plot
 
-pdf(file = "Out/reps_ESS.pdf", height = 5, width  = 5)
-plot(n_samp, mean_mESS, type = "l", lwd = 2, xlab = "Sample Size", ylab = "ESS/n", col = "blue", ylim = c(0,.31))
+pdf(file = "Out/reps_ESS.pdf", height = 6, width  = 6)
+plot(n_samp, mean_mESS, type = "l", lwd = 2, xlab = "Sample Size", ylab = "ESS/n", 
+  col = "blue", ylim = c(0,.31), cex.lab = 1.3)
 segments(x0 = n_samp, y0 = mean_mESS - se_mESS, y1 = mean_mESS + se_mESS, col = adjustcolor("blue", alpha = 0.5))
 for(i in 1:d)
 {
@@ -64,6 +65,7 @@ for(i in 1:d)
 }
 lines(n_samp, mean_kESS, col = "red")
 segments(x0 = n_samp, y0 = mean_kESS - se_kESS, y1 = mean_kESS + se_kESS, col = adjustcolor("red", alpha = 0.5))
-legend("topright", legend = c("m-ESS", "Owen", "Kong"), lty = c(1,2,1), lwd = c(2,1,1), col = c("blue", "black", "red"), cex = 0.8)
+legend("topright", legend = c("M-ESS", "Owen", "Kong"), bty = "n",
+  lty = c(1,2,1), lwd = c(2,1,1), col = c("blue", "black", "red"), cex = 1.3)
 dev.off()
 
